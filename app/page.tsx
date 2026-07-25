@@ -1,7 +1,25 @@
-import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import UploadDocumentDialog from "@/components/Dialog/upload-document";
 
-export default function Home() {
+export default function KnowledgeBasePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black"></div>
+    <section className="h-screen w-full">
+      <div className="border">
+        <h1 className="text-4xl">Knowledge Base Page</h1>
+        <Dialog>
+          <DialogTrigger
+            render={<Button variant="outline">Open Dialog</Button>}
+          />
+          <DialogContent className="sm:max-w-3xl max-h-[90%]">
+            <UploadDocumentDialog />
+          </DialogContent>
+        </Dialog>
+      </div>
+    </section>
   );
 }
