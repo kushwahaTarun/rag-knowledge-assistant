@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useActionState } from "react";
+import { FileText, Loader2, Upload } from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import {
@@ -18,13 +20,12 @@ import { Label } from "@/components/ui/label";
 import { uploadDocument } from "@/lib/action";
 
 export default function UploadDocumentDialog() {
-  // initial state of the form
   const initialState = {
     error: "",
     document_id: "",
   };
 
-  const [state, formAction] = useActionState(
+  const [state, formAction, isPending] = useActionState(
     uploadDocument,
     initialState,
   );
@@ -41,7 +42,7 @@ export default function UploadDocumentDialog() {
       toast.success(
         typeof state.document_id === "string"
           ? state.document_id
-          : "Uploaded Successfully",
+          : "Uploaded successfully",
         { position: "top-center" },
       );
     }
@@ -49,31 +50,77 @@ export default function UploadDocumentDialog() {
 
   return (
     <form action={formAction}>
-      <DialogHeader>
-        <DialogTitle>Upload Document</DialogTitle>
-        <DialogDescription>
-          Upload your document to the Knowledge Base
-        </DialogDescription>
+      <DialogHeader className="space-y-3">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.25 }}
+          className="flex size-11 items-center justify-center rounded-xl bg-primary/15 text-primary"
+        >
+          <Upload className="size-5" />
+        </motion.div>
+        <div>
+          <DialogTitle className="text-lg">Upload document</DialogTitle>
+          <DialogDescription className="mt-1.5">
+            Add text to your knowledge base. It will be chunked and embedded for
+            search and chat.
+          </DialogDescription>
+        </div>
       </DialogHeader>
-      <FieldGroup className="mt-4">
+
+      <FieldGroup className="mt-6">
         <Field>
-          <Label htmlFor="document-title">Document Title</Label>
-          <Input id="document-title" name="title" />
-        </Field>
-        <Field>
-          <Label htmlFor="document">Document Text</Label>
-          <Textarea
-            placeholder="Type your message here."
-            className="md:min-h-56 md:max-h-68 overflow-y-auto"
-            name="document"
-            id="document"
+          <Label htmlFor="document-title" className="text-muted-foreground">
+            Document title
+          </Label>
+          <Input
+            id="document-title"
+            name="title"
+            placeholder="e.g. Product FAQ, Company handbook…"
+            className="h-10"
+            disabled={isPending}
+            required
           />
         </Field>
-        <Field></Field>
+        <Field>
+          <Label htmlFor="document" className="text-muted-foreground">
+            Document text
+          </Label>
+          <div className="relative">
+            <Textarea
+              placeholder="Paste your document content here…"
+              className="min-h-44 max-h-64 resize-none overflow-y-auto pe-10 md:min-h-52"
+              name="document"
+              id="document"
+              disabled={isPending}
+              required
+            />
+            <FileText className="pointer-events-none absolute top-3 right-3 size-4 text-muted-foreground/50" />
+          </div>
+        </Field>
       </FieldGroup>
-      <DialogFooter>
-        <DialogClose render={<Button variant="outline">Cancel</Button>} />
-        <Button type="submit">Save changes</Button>
+
+      <DialogFooter className="mt-2">
+        <DialogClose
+          render={
+            <Button variant="outline" disabled={isPending}>
+              Cancel
+            </Button>
+          }
+        />
+        <Button type="submit" disabled={isPending} className="gap-2 min-w-28">
+          {isPending ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Uploading…
+            </>
+          ) : (
+            <>
+              <Upload className="size-4" />
+              Upload
+            </>
+          )}
+        </Button>
       </DialogFooter>
     </form>
   );
