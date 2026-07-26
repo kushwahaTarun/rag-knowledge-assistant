@@ -1,6 +1,6 @@
 "use server";
 
-import { chatFormState } from "@/interfaces/chat"; 
+import { chatFormState } from "@/interfaces/chat";
 
 type UploadState = {
   error: string;
@@ -60,59 +60,67 @@ export async function uploadDocument(
   }
 }
 
-export async function submitQuery(prevState: chatFormState, formData) {
+// Function that makes an API call to get the user query response
+export async function submitQuery(
+  prevState: chatFormState,
+  formData: FormData,
+): Promise<chatFormState> {
+  const rawQuery = formData.get("user-query");
+  const userQuery = typeof rawQuery === "string" ? rawQuery.trim() : "";
 
-    const userQuery = formData.get("user-query");
-    
-    prevState = {
-        error: "",
-        chats: [
-            ...prevState.chats,
-            {
-                role: "user",
-                content: userQuery
-            }
-        ]
+  // Empty query: keep existing history, surface an error
+  if (!userQuery) {
+    return {
+      error: "Please provide your query",
+      chats: prevState.chats,
+    };
+  }
+
+  // Build chats with the user message first (source of truth for the client after return)
+  const chatsWithUser = [
+    ...prevState.chats,
+    {
+      role: "user" as const,
+      content: userQuery,
+      createdAt: Date.now(),
+    },
+  ];
+
+  try {
+    const response = await fetch(`${process.env.BACKEND_BASE_URL}/api/ask`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        question: userQuery,
+      }),
+    });
+
+    if (!response.ok) {
+      return {
+        error: "Failed to get a response",
+        chats: chatsWithUser,
+      };
     }
-
-try{
-
-    // if no query is provided by the user returning an error to the user
-    if(!userQuery.trim()) {
-        return {
-            error: "Please provide you query",
-            chats: []
-        }
-    }
-
-    const response = await fetch(`${process.env.BACKEND_BASE_URL}/api/ask`,{
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            question: userQuery
-        })
-    })
 
     const result = await response.json();
-    console.log(result);
-    return {
-        error: "",
-        chats: [
-            ...prevState.chats,
-            {
-                role: "assistant",
-                content: result.answer
-            }
-        ]
-    }
 
-}
-catch(err) {
     return {
-        error: err.message,
-        content: []
-    }
-}
+      error: "",
+      chats: [
+        ...chatsWithUser,
+        {
+          role: "assistant",
+          content: result.answer,
+          createdAt: Date.now(),
+        },
+      ],
+    };
+  } catch {
+    return {
+      error: "Something went wrong",
+      chats: chatsWithUser,
+    };
+  }
 }

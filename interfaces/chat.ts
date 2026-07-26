@@ -1,9 +1,10 @@
-export interface Message{
-    role: string;
-    content: string;
+export interface Message {
+  role: string;
+  content: string;
+  createdAt?: number;
 }
 
-export interface chatFormState{
-    error: string,
-    chats: Message[],
+export interface chatFormState {
+  error: string;
+  chats: Message[];
 }
