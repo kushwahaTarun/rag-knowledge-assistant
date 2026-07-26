@@ -128,3 +128,15 @@
     @apply font-sans;
   }
 }
+
+/* Scrollable, but scrollbar is hidden */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE / old Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+  }
+}

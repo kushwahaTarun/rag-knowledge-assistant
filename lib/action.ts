@@ -1,5 +1,7 @@
 "use server";
 
+import { chatFormState } from "@/interfaces/chat"; 
+
 type UploadState = {
   error: string;
   document_id?: string;
@@ -56,4 +58,61 @@ export async function uploadDocument(
       error: error instanceof Error ? error.message : "Something went wrong",
     };
   }
+}
+
+export async function submitQuery(prevState: chatFormState, formData) {
+
+    const userQuery = formData.get("user-query");
+    
+    prevState = {
+        error: "",
+        chats: [
+            ...prevState.chats,
+            {
+                role: "user",
+                content: userQuery
+            }
+        ]
+    }
+
+try{
+
+    // if no query is provided by the user returning an error to the user
+    if(!userQuery.trim()) {
+        return {
+            error: "Please provide you query",
+            chats: []
+        }
+    }
+
+    const response = await fetch(`${process.env.BACKEND_BASE_URL}/api/ask`,{
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            question: userQuery
+        })
+    })
+
+    const result = await response.json();
+    console.log(result);
+    return {
+        error: "",
+        chats: [
+            ...prevState.chats,
+            {
+                role: "assistant",
+                content: result.answer
+            }
+        ]
+    }
+
+}
+catch(err) {
+    return {
+        error: err.message,
+        content: []
+    }
+}
 }
