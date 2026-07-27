@@ -13,7 +13,7 @@ import UploadDocumentDialog from "@/components/Dialog/upload-document";
 
 export function HomeContent() {
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-10 sm:px-6">
+    <section className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-y-auto px-4 py-10 sm:px-6">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

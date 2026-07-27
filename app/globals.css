@@ -140,3 +140,33 @@
     display: none; /* Chrome, Safari, Edge */
   }
 }
+
+/* Floating dots for chat "Thinking" indicator */
+@keyframes thinking-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.thinking-dot {
+  display: inline-block;
+  width: 0.2rem;
+  height: 0.2rem;
+  border-radius: 9999px;
+  background-color: oklch(0.85 0 0);
+  animation: thinking-float 0.7s ease-in-out infinite;
+}
+
+.thinking-dot-delay-1 {
+  animation-delay: 0.15s;
+}
+
+.thinking-dot-delay-2 {
+  animation-delay: 0.3s;
+}

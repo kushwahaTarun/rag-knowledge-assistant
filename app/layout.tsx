@@ -3,6 +3,12 @@ import { Poppins, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -26,14 +32,25 @@ export default function RootLayout({
     <html
       lang="en"
       className={cn(
-        "dark h-full antialiased font-sans",
+        "dark h-full overflow-hidden antialiased font-sans",
         poppins.variable,
         geist.variable,
       )}
     >
-      <body className="min-h-full flex flex-col font-[family-name:var(--font-poppins)]">
-        {children}
-        <Toaster />
+      <body className="h-full overflow-hidden font-[family-name:var(--font-poppins)]">
+        <SidebarProvider className="!h-full !min-h-0">
+          <AppSidebar />
+          {/* Inset fills remaining width; height locked to viewport so children can scroll internally */}
+          <SidebarInset className="min-h-0 min-w-0 overflow-hidden">
+            <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
+              <SidebarTrigger />
+            </header>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {children}
+            </div>
+            <Toaster />
+          </SidebarInset>
+        </SidebarProvider>
       </body>
     </html>
   );
