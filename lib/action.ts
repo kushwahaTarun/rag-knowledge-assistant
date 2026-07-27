@@ -82,7 +82,6 @@ export async function submitQuery(
     {
       role: "user" as const,
       content: userQuery,
-      createdAt: Date.now(),
     },
   ];
 
@@ -113,7 +112,6 @@ export async function submitQuery(
         {
           role: "assistant",
           content: result.answer,
-          createdAt: Date.now(),
         },
       ],
     };
