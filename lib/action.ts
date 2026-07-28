@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { chatFormState } from "@/interfaces/chat";
 
 type UploadState = {
@@ -49,6 +51,9 @@ export async function uploadDocument(
 
     const data = await response.json();
     const { document_id } = data;
+
+    revalidatePath("/");
+    
     return {
       error: "",
       document_id,

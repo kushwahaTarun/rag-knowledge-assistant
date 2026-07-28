@@ -1,25 +1,28 @@
-"use client";
-
 import { Upload } from "lucide-react";
-import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import UploadDocumentDialog from "@/components/Dialog/upload-document";
+import KnowledgeBaseTable from "@/components/home/KnowledgeBaseTable";
 
-export function HomeContent() {
+export async function HomeContent() {
+  // making an API call to get the documents from the DB
+  const response = await fetch(
+    `${process.env.BACKEND_BASE_URL}/api/get-documents`,
+    { cache: "no-store" },
+  );
+
+  // if error while making an API call or in the response
+  if (!response.ok) {
+    throw new Error("Error while extracting a documents from the database");
+  }
+
+  const result = await response.json();
+  const documents = result.documents ?? [];
+
   return (
     <section className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-y-auto px-4 py-10 sm:px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="flex flex-col gap-8"
-      >
+      <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -45,13 +48,8 @@ export function HomeContent() {
           </Dialog>
         </div>
 
-        {/* Documents table will go here once the list endpoint is ready */}
-        <div className="flex min-h-64 flex-1 items-center justify-center rounded-xl border border-dashed border-border bg-card/40 px-4 py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            Document table will appear here.
-          </p>
-        </div>
-      </motion.div>
+        <KnowledgeBaseTable documents={documents} />
+      </div>
     </section>
   );
 }
