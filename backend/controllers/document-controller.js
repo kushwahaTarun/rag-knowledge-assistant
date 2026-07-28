@@ -1,6 +1,22 @@
+import { supabase } from "../db/supabaseClient.js";
+
 import { storeDocument } from "../services/document-service.js";
 import { searchChunks } from "../services/search-service.js";
 import { generateAnswer } from "../services/ai-service.js";
+
+export async function getDocuments(req, res, next) {
+  try {
+    const { data, error } = await supabase
+      .from("documents")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return res.status(200).json({ success: true, documents: data });
+  } catch (err) {
+    next(err);
+  }
+}
 
 // Controller function to store a new document and its chunks in the database
 export async function createDocument(req, res, next) {
