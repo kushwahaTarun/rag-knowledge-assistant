@@ -16,7 +16,7 @@ export async function HomeContent() {
   const documents = result.documents ?? [];
 
   return (
-    <section className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-y-auto px-4 py-10 sm:px-6">
+    <section className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-y-auto px-4 py-8 sm:px-6 sm:py-10">
       <KnowledgeBaseClient documents={documents} />
     </section>
   );

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -48,6 +49,7 @@ export default function KnowledgeBaseTable({
   const [isPending, startTransition] = useTransition();
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
 
   // states that stores the document dialogue box visibility related state
   const [documentDialogue, setDocumentDialogue] = useState(false);
@@ -91,13 +93,18 @@ export default function KnowledgeBaseTable({
 
   // triggers when user click on a row to see the table content on the drawer
   const documentPreview = async (id: string) => {
-    const data = await handleDocumentPreview(id);
-    const { success, document } = data;
+    setPreviewLoadingId(id);
+    try {
+      const data = await handleDocumentPreview(id);
+      const { success, document } = data;
 
-    if (success) {
-      // enabling the sidebar that shows the document content in it and also updating the state var to store the document content
-      setDocumentDialogue(true);
-      setDocumentContent(document);
+      if (success) {
+        // enabling the sidebar that shows the document content in it and also updating the state var to store the document content
+        setDocumentDialogue(true);
+        setDocumentContent(document);
+      }
+    } finally {
+      setPreviewLoadingId(null);
     }
   };
 
@@ -126,27 +133,34 @@ export default function KnowledgeBaseTable({
 
   if (!total) {
     return (
-      <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card/40 px-4 py-12 text-center">
-        <span className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-          <Inbox className="size-5" />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="relative flex min-h-72 flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl border border-dashed border-border/80 glass-panel px-4 py-14 text-center"
+      >
+        <div className="pointer-events-none absolute inset-x-8 top-0 h-px shimmer-border opacity-60" />
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-800/25 to-sky-900/15 text-cyan-400/80 ring-1 ring-cyan-800/35">
+          <Inbox className="size-6" />
         </span>
         <div>
-          <p className="font-medium tracking-tight">No documents yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Upload a document to start building your knowledge base.
+          <p className="text-lg font-medium tracking-tight">No documents yet</p>
+          <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted-foreground">
+            Upload your first document to start building a searchable knowledge
+            base for chat.
           </p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card/40">
+    <div className="overflow-hidden rounded-2xl border border-border/60 glass-panel">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[600px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted/40">
-              <th className="w-12 px-4 py-3">
+            <tr className="border-b border-border/60 bg-muted/30">
+              <th className="w-12 px-4 py-3.5">
                 <input
                   type="checkbox"
                   checked={allPageSelected}
@@ -155,92 +169,117 @@ export default function KnowledgeBaseTable({
                   }}
                   onChange={toggleSelectAllPage}
                   aria-label="Select all documents on this page"
-                  className="size-4 cursor-pointer rounded border-border accent-primary"
+                  className="size-4 cursor-pointer rounded border-border accent-primary transition-transform duration-150 hover:scale-110"
                 />
               </th>
-              <th className="px-4 py-3 font-medium text-muted-foreground">#</th>
-              <th className="px-4 py-3 font-medium text-muted-foreground">
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                #
+              </th>
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Title
               </th>
-              <th className="px-4 py-3 font-medium text-muted-foreground">
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Created
               </th>
-              <th className="w-16 px-4 py-3 text-right font-medium text-muted-foreground">
+              <th className="w-16 px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
           </thead>
           <tbody>
-            {pageItems.map((document: DocumentType, index: number) => {
-              const rowNumber = (currentPage - 1) * PAGE_SIZE + index + 1;
-              const isSelected = selectedIds.includes(document.id);
-              const isRowDeleting = deletingId === document.id;
+            <AnimatePresence mode="popLayout" initial={false}>
+              {pageItems.map((document: DocumentType, index: number) => {
+                const rowNumber = (currentPage - 1) * PAGE_SIZE + index + 1;
+                const isSelected = selectedIds.includes(document.id);
+                const isRowDeleting = deletingId === document.id;
+                const isPreviewLoading = previewLoadingId === document.id;
 
-              return (
-                <tr
-                  key={document.id}
-                  className={cn(
-                    "cursor-pointer border-b border-border/70 transition-colors last:border-b-0 hover:bg-muted/30",
-                    isSelected && "bg-muted/40",
-                  )}
-                  onClick={() => documentPreview(document.id)}
-                >
-                  <td
-                    className="px-4 py-3"
-                    onClick={(e) => e.stopPropagation()}
+                return (
+                  <motion.tr
+                    key={document.id}
+                    layout
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -12 }}
+                    transition={{
+                      duration: 0.25,
+                      delay: index * 0.03,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className={cn(
+                      "group cursor-pointer border-b border-border/50 transition-colors duration-200 last:border-b-0",
+                      "hover:bg-cyan-950/40",
+                      isSelected && "bg-cyan-900/20 hover:bg-cyan-900/25",
+                    )}
+                    onClick={() => documentPreview(document.id)}
                   >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleSelect(document.id)}
-                      aria-label={`Select ${document.title || "document"}`}
-                      className="size-4 cursor-pointer rounded border-border accent-primary"
-                    />
-                  </td>
-                  <td className="px-4 py-3 tabular-nums text-muted-foreground">
-                    {rowNumber}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
-                        <FileText className="size-4" />
-                      </span>
-                      <span className="truncate font-medium tracking-tight">
-                        {document.title || "Untitled"}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-                    {formatDate(document.created_at)}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-right"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-muted-foreground hover:text-destructive"
-                      disabled={isPending}
-                      onClick={() => handleRowDelete(document.id)}
-                      aria-label={`Delete ${document.title || "document"}`}
+                    <td
+                      className="px-4 py-3.5"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {isRowDeleting ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="size-4" />
-                      )}
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(document.id)}
+                        aria-label={`Select ${document.title || "document"}`}
+                        className="size-4 cursor-pointer rounded border-border accent-primary transition-transform duration-150 hover:scale-110"
+                      />
+                    </td>
+                    <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
+                      {rowNumber}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span
+                          className={cn(
+                            "flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
+                            "bg-gradient-to-br from-muted to-muted/40 text-foreground ring-1 ring-border/60",
+                            "group-hover:from-cyan-900/40 group-hover:to-sky-950/30 group-hover:text-cyan-400/80 group-hover:ring-cyan-800/40",
+                          )}
+                        >
+                          {isPreviewLoading ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <FileText className="size-4" />
+                          )}
+                        </span>
+                        <span className="truncate font-medium tracking-tight transition-colors group-hover:text-cyan-200/70">
+                          {document.title || "Untitled"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-muted-foreground">
+                      {formatDate(document.created_at)}
+                    </td>
+                    <td
+                      className="px-4 py-3.5 text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-muted-foreground opacity-70 transition-all duration-200 hover:bg-destructive/15 hover:text-destructive group-hover:opacity-100"
+                        disabled={isPending}
+                        onClick={() => handleRowDelete(document.id)}
+                        aria-label={`Delete ${document.title || "document"}`}
+                      >
+                        {isRowDeleting ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-4" />
+                        )}
+                      </Button>
+                    </td>
+                  </motion.tr>
+                );
+              })}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-border bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-border/60 bg-muted/15 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground sm:text-sm">
           Showing{" "}
           <span className="font-medium text-foreground">
@@ -252,7 +291,7 @@ export default function KnowledgeBaseTable({
             <>
               {" "}
               ·{" "}
-              <span className="font-medium text-foreground">
+              <span className="font-medium text-cyan-400/80">
                 {selectedIds.length}
               </span>{" "}
               selected
@@ -265,7 +304,7 @@ export default function KnowledgeBaseTable({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1"
+            className="gap-1 border-border/70 bg-background/30 transition-transform hover:scale-[1.02]"
             disabled={currentPage <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
@@ -283,7 +322,7 @@ export default function KnowledgeBaseTable({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1"
+            className="gap-1 border-border/70 bg-background/30 transition-transform hover:scale-[1.02]"
             disabled={currentPage >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           >

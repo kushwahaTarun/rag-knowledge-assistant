@@ -40,12 +40,15 @@ export default function RootLayout({
       <body className="h-full overflow-hidden font-[family-name:var(--font-poppins)]">
         <SidebarProvider className="!h-full !min-h-0">
           <AppSidebar />
-          {/* Inset fills remaining width; height locked to viewport so children can scroll internally */}
-          <SidebarInset className="min-h-0 min-w-0 overflow-hidden">
-            <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
-              <SidebarTrigger />
+          <SidebarInset className="mesh-bg min-h-0 min-w-0 overflow-hidden">
+            <header className="glass-soft relative z-10 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 px-4">
+              <SidebarTrigger className="transition-transform duration-200 hover:scale-105" />
+              <div className="h-4 w-px bg-border/70" />
+              <p className="text-xs font-medium tracking-wide text-muted-foreground sm:text-sm">
+                Intelligent document search & chat
+              </p>
             </header>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
               {children}
             </div>
             <Toaster />

@@ -1,4 +1,6 @@
-import { ArrowUpIcon, LoaderIcon } from "lucide-react";
+"use client";
+
+import { ArrowUpIcon, LoaderIcon, Sparkles } from "lucide-react";
 
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -7,35 +9,61 @@ import { cn } from "@/lib/utils";
 export default function UserQueryTextAreaAndOptions({
   isPending,
   className,
+  compact = false,
 }: {
   isPending: boolean;
   className?: string;
+  compact?: boolean;
 }) {
   return (
-    <div className={cn("flex w-full items-start gap-2", className)}>
+    <div
+      className={cn(
+        "group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/50 shadow-xl shadow-black/20 backdrop-blur-xl transition-all duration-300",
+        "focus-within:border-cyan-700/35 focus-within:shadow-black/15 focus-within:glow-primary",
+        className,
+      )}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-700/30 to-transparent opacity-0 transition-opacity duration-300 group-focus-within:opacity-100" />
+
       <Textarea
-        className="scrollbar-hide min-h-28 max-h-36 flex-1 overflow-y-auto"
-        placeholder="How can i help you today?"
-        name="user-query"
-      />
-      <Button
-        className="mt-1 shrink-0 cursor-pointer"
-        variant="outline"
-        size="icon"
-        name="user-query-submit"
-        type="submit"
-        disabled={isPending}
-      >
-        {isPending ? (
-          <LoaderIcon
-            role="status"
-            aria-label="Loading"
-            className={cn("size-4 animate-spin")}
-          />
-        ) : (
-          <ArrowUpIcon />
+        className={cn(
+          "scrollbar-hide min-h-24 max-h-40 w-full resize-none border-0 bg-transparent px-4 pb-14 pt-4 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-[15px]",
+          compact ? "min-h-20" : "min-h-28",
         )}
-      </Button>
+        placeholder="Ask anything about your knowledge base…"
+        name="user-query"
+        disabled={isPending}
+      />
+
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 px-3 pb-3">
+        <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground sm:inline-flex">
+          <Sparkles className="size-3 text-cyan-400/70" />
+          Answers grounded in your documents
+        </span>
+
+        <Button
+          className={cn(
+            "ml-auto size-10 shrink-0 rounded-xl transition-all duration-200",
+            "bg-gradient-to-br from-cyan-700 to-sky-800 text-white shadow-lg shadow-black/30",
+            "hover:scale-105 hover:from-cyan-600 hover:to-sky-700",
+            "active:scale-95 disabled:opacity-60",
+          )}
+          size="icon"
+          name="user-query-submit"
+          type="submit"
+          disabled={isPending}
+        >
+          {isPending ? (
+            <LoaderIcon
+              role="status"
+              aria-label="Loading"
+              className="size-4 animate-spin"
+            />
+          ) : (
+            <ArrowUpIcon className="size-4" />
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

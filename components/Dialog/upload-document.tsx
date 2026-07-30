@@ -52,53 +52,61 @@ export default function UploadDocumentDialog() {
     <form action={formAction}>
       <DialogHeader className="space-y-3">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.25 }}
-          className="flex size-11 items-center justify-center rounded-xl bg-primary/15 text-primary"
+          initial={{ opacity: 0, scale: 0.85, rotate: -6 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 18 }}
+          className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-800/30 to-sky-900/20 text-cyan-400/80 ring-1 ring-cyan-800/40 shadow-lg shadow-black/15"
         >
           <Upload className="size-5" />
         </motion.div>
         <div>
-          <DialogTitle className="text-lg">Upload document</DialogTitle>
-          <DialogDescription className="mt-1.5">
+          <DialogTitle className="text-xl tracking-tight">
+            Upload document
+          </DialogTitle>
+          <DialogDescription className="mt-1.5 text-sm leading-relaxed">
             Add text to your knowledge base. It will be chunked and embedded for
             search and chat.
           </DialogDescription>
         </div>
       </DialogHeader>
 
-      <FieldGroup className="mt-6">
-        <Field>
-          <Label htmlFor="document-title" className="text-muted-foreground">
-            Document title
-          </Label>
-          <Input
-            id="document-title"
-            name="title"
-            placeholder="e.g. Product FAQ, Company handbook…"
-            className="h-10"
-            disabled={isPending}
-            required
-          />
-        </Field>
-        <Field>
-          <Label htmlFor="document" className="text-muted-foreground">
-            Document text
-          </Label>
-          <div className="relative">
-            <Textarea
-              placeholder="Paste your document content here…"
-              className="min-h-44 max-h-64 resize-none overflow-y-auto pe-10 md:min-h-52"
-              name="document"
-              id="document"
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08, duration: 0.35 }}
+      >
+        <FieldGroup className="mt-6">
+          <Field>
+            <Label htmlFor="document-title" className="text-muted-foreground">
+              Document title
+            </Label>
+            <Input
+              id="document-title"
+              name="title"
+              placeholder="e.g. Product FAQ, Company handbook…"
+              className="h-11 border-border/70 bg-background/40 transition-all focus-visible:border-cyan-700/35"
               disabled={isPending}
               required
             />
-            <FileText className="pointer-events-none absolute top-3 right-3 size-4 text-muted-foreground/50" />
-          </div>
-        </Field>
-      </FieldGroup>
+          </Field>
+          <Field>
+            <Label htmlFor="document" className="text-muted-foreground">
+              Document text
+            </Label>
+            <div className="relative">
+              <Textarea
+                placeholder="Paste your document content here…"
+                className="min-h-44 max-h-64 resize-none overflow-y-auto border-border/70 bg-background/40 pe-10 transition-all focus-visible:border-cyan-700/35 md:min-h-52"
+                name="document"
+                id="document"
+                disabled={isPending}
+                required
+              />
+              <FileText className="pointer-events-none absolute top-3 right-3 size-4 text-muted-foreground/50" />
+            </div>
+          </Field>
+        </FieldGroup>
+      </motion.div>
 
       <DialogFooter className="mt-2">
         <DialogClose
@@ -108,7 +116,11 @@ export default function UploadDocumentDialog() {
             </Button>
           }
         />
-        <Button type="submit" disabled={isPending} className="gap-2 min-w-28">
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="min-w-28 gap-2 bg-gradient-to-br from-cyan-700 to-sky-800 text-white shadow-lg shadow-black/25 transition-transform hover:scale-[1.02] hover:from-cyan-600 hover:to-sky-700"
+        >
           {isPending ? (
             <>
               <Loader2 className="size-4 animate-spin" />
