@@ -127,3 +127,91 @@ export async function submitQuery(
     };
   }
 }
+
+// Function that is responsible for getting the document content once user click on the document in the KB
+export async function handleDocumentPreview(id: string) {
+
+  try {
+    const result = await fetch(`${process.env.BACKEND_BASE_URL}/api/documents/${id}`);
+
+    if(!result.ok) {
+      throw new Error("Error while accessing the document content");
+    }
+
+    const response = await result.json();
+
+    return response;
+  }
+  catch (err) {
+    throw new Error(
+      err instanceof Error ? err.message : "Error while accessing the document content",
+    );
+  }
+}
+
+// Function that deletes a single document from the knowledge base
+export async function deleteDocument(id: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  if (!id) {
+    return { success: false, error: "Document id is required" };
+  }
+
+  try {
+    const response = await fetch(
+      `${process.env.BACKEND_BASE_URL}/api/documents/${id}`,
+      { method: "DELETE" },
+    );
+
+    if (!response.ok) {
+      return { success: false, error: "Failed to delete document" };
+    }
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Something went wrong",
+    };
+  }
+}
+
+// Function that deletes multiple documents from the knowledge base
+export async function deleteDocuments(ids: string[]): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  if (!ids.length) {
+    return { success: false, error: "No documents selected" };
+  }
+
+  try {
+    const results = await Promise.all(
+      ids.map(async (id) => {
+        const response = await fetch(
+          `${process.env.BACKEND_BASE_URL}/api/documents/${id}`,
+          { method: "DELETE" },
+        );
+        return response.ok;
+      }),
+    );
+
+    if (results.some((ok) => !ok)) {
+      revalidatePath("/");
+      return {
+        success: false,
+        error: "Some documents could not be deleted",
+      };
+    }
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Something went wrong",
+    };
+  }
+}

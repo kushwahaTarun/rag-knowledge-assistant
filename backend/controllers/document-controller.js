@@ -18,6 +18,61 @@ export async function getDocuments(req, res, next) {
   }
 }
 
+export async function getDocumentContent(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: "Document id is required" });
+    }
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("title, content")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return res.status(200).json({
+      success: true,
+      document: data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deleteDocument(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res
+        .status(400)
+        .json({ error: "Id of the document is required to delete a document" });
+    }
+
+    const { error } = await supabase
+      .from("documents")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      throw error("Error while deleting the document");
+    }
+
+    return res.status(200).json({
+      success: true,
+    });
+
+  } catch (error) {
+    next(error);
+  }
+}
+
 // Controller function to store a new document and its chunks in the database
 export async function createDocument(req, res, next) {
   try {
