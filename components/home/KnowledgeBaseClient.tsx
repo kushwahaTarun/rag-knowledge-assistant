@@ -143,7 +143,7 @@ export default function KnowledgeBaseClient({
                   </Button>
                 }
               />
-              <DialogContent className="max-h-[90vh] overflow-y-auto border-border/60 bg-card/95 backdrop-blur-xl sm:max-w-2xl">
+              <DialogContent className="max-h-[min(92vh,720px)] overflow-y-auto border-border/60 bg-card/95 p-5 backdrop-blur-xl sm:max-w-2xl sm:p-6">
                 <UploadDocumentDialog />
               </DialogContent>
             </Dialog>

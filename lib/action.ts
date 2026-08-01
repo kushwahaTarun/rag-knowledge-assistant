@@ -10,50 +10,67 @@ type UploadState = {
 };
 
 // Function that makes an API call to upload the document to the DB
+// Supports two sources from the dialog:
+// 1) Paste mode  → form field "document" (plain text)
+// 2) File mode   → form field "file" (.txt File)
 export async function uploadDocument(
   prevState: UploadState,
   formData: FormData,
 ): Promise<UploadState> {
-  const document = formData.get("document");
   const title = formData.get("title");
+  const pastedText = formData.get("document");
+  const file = formData.get("file");
 
-  // if user has not provided the document title or the document text
-  if (
-    typeof title !== "string" ||
-    typeof document !== "string" ||
-    !title.trim().length ||
-    !document.trim().length
-  ) {
+  if (typeof title !== "string" || !title.trim().length) {
+    return { error: "Please provide a document title" };
+  }
+
+  const hasFile = file instanceof File && file.size > 0;
+  const hasPaste =
+    typeof pastedText === "string" && pastedText.trim().length > 0;
+
+  if (!hasFile && !hasPaste) {
     return {
-      error: "Knowledge cannot be empty, Please add some data",
+      error: "Knowledge cannot be empty. Paste text or upload a .txt file",
     };
   }
 
   try {
-    // API call to store the document on the DB
+    // Multipart FormData so the backend can read either req.file or req.body.fullText
+    const outbound = new FormData();
+    outbound.append("title", title.trim());
+
+    if (hasFile) {
+      // File mode: multer reads field name "file"
+      outbound.append("file", file);
+    } else if (hasPaste) {
+      // Paste mode: text sent as a form field (no file attached)
+      outbound.append("fullText", (pastedText as string).trim());
+    }
+
+    // Do NOT set Content-Type — fetch sets multipart boundary automatically
     const response = await fetch(
       `${process.env.BACKEND_BASE_URL}/api/documents`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          fullText: document,
-        }),
+        body: outbound,
       },
     );
 
     if (!response.ok) {
-      return { error: "Failed to upload a document" };
+      const errorBody = await response.json().catch(() => null);
+      return {
+        error:
+          (errorBody && (errorBody.error || errorBody.message)) ||
+          "Failed to upload a document",
+      };
     }
 
     const data = await response.json();
     const { document_id } = data;
 
     revalidatePath("/");
-    
+
     return {
       error: "",
       document_id,

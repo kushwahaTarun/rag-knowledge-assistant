@@ -6,6 +6,7 @@ import {
   getDocumentContent,
   deleteDocument,
 } from "../controllers/document-controller.js";
+import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const router = express.Router();
 router.get("/get-documents", getDocuments);
 
 // Endpoint to store a document and its chunks in database
-router.post("/documents", createDocument);
+router.post("/documents", upload.single("file"), createDocument);
 
 // Endpoint that returns the document content
 router.get("/documents/:id", getDocumentContent);

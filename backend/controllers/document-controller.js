@@ -55,10 +55,7 @@ export async function deleteDocument(req, res, next) {
         .json({ error: "Id of the document is required to delete a document" });
     }
 
-    const { error } = await supabase
-      .from("documents")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("documents").delete().eq("id", id);
 
     if (error) {
       throw error("Error while deleting the document");
@@ -67,7 +64,6 @@ export async function deleteDocument(req, res, next) {
     return res.status(200).json({
       success: true,
     });
-
   } catch (error) {
     next(error);
   }
@@ -79,11 +75,27 @@ export async function createDocument(req, res, next) {
     const { title, fullText } = req.body;
 
     // if title or fullText is missing, return a 400 error
-    if (!title || !fullText) {
-      return res.status(400).json({ error: "Title and fullText are required" });
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
     }
 
-    const result = await storeDocument(title, fullText);
+    let text = "";
+
+    if (req.file) {
+      text = req.file.buffer.toString("utf-8");
+    } else if (fullText) {
+      text = fullText;
+    } else {
+      return res
+        .status(400)
+        .json({ error: "Please provide a .txt file or the text" });
+    }
+
+    if (!text.trim()) {
+      return res.status(400).json({ message: "Document cannot be empty" });
+    }
+
+    const result = await storeDocument(title, text);
     res.status(201).json(result);
   } catch (err) {
     next(err);
