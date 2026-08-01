@@ -61,18 +61,18 @@ export default function KnowledgeBaseClient({
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-5 sm:gap-8">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative overflow-hidden rounded-2xl border border-border/60 glass-panel p-6 sm:p-8"
+        className="relative overflow-hidden rounded-2xl border border-border/60 glass-panel p-4 sm:p-8"
       >
         <div className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-cyan-900/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 left-1/3 size-40 rounded-full bg-sky-950/30 blur-3xl" />
 
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-3">
+        <div className="relative flex flex-col gap-5 sm:gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0 space-y-3">
             <Badge
               variant="secondary"
               className="gap-1.5 rounded-full border border-cyan-700/25 bg-cyan-900/20 px-2.5 py-1 text-[11px] font-medium text-cyan-400/80"
@@ -81,12 +81,12 @@ export default function KnowledgeBaseClient({
               Knowledge workspace
             </Badge>
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-4xl">
                 <span className="text-gradient">Knowledge Base</span>
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                 Upload, organize, and manage documents that power your RAG
-                assistant. Click any row to preview content.
+                assistant. Tap any document to preview content.
               </p>
             </div>
 
@@ -106,7 +106,7 @@ export default function KnowledgeBaseClient({
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
             <AnimatePresence mode="popLayout">
               {selectedIds.length > 0 && (
                 <motion.div
@@ -115,11 +115,12 @@ export default function KnowledgeBaseClient({
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.9, x: 8 }}
                   transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                  className="w-full sm:w-auto"
                 >
                   <Button
                     type="button"
                     variant="destructive"
-                    className="gap-2 shadow-lg shadow-red-500/10"
+                    className="h-11 w-full gap-2 shadow-lg shadow-red-500/10 sm:h-9 sm:w-auto"
                     disabled={isPending}
                     onClick={handleBulkDelete}
                   >
@@ -137,13 +138,13 @@ export default function KnowledgeBaseClient({
             <Dialog>
               <DialogTrigger
                 render={
-                  <Button className="gap-2 shrink-0 glow-primary transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                  <Button className="h-11 w-full shrink-0 gap-2 glow-primary transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] sm:h-9 sm:w-auto">
                     <Upload className="size-4" />
                     Upload document
                   </Button>
                 }
               />
-              <DialogContent className="max-h-[min(92vh,720px)] overflow-y-auto border-border/60 bg-card/95 p-5 backdrop-blur-xl sm:max-w-2xl sm:p-6">
+              <DialogContent className="max-h-[min(92dvh,720px)] w-[calc(100%-1.25rem)] overflow-y-auto overscroll-contain border-border/60 bg-card/95 p-4 backdrop-blur-xl sm:max-w-2xl sm:p-6">
                 <UploadDocumentDialog />
               </DialogContent>
             </Dialog>

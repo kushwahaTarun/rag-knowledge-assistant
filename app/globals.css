@@ -121,11 +121,16 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    /* Prevent horizontal rubber-band overflow on mobile browsers */
+    overflow-x: hidden;
+  }
+  body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+    /* Fill the visual viewport on mobile (handles browser chrome / notches) */
+    min-height: 100dvh;
   }
   ::selection {
     background: oklch(0.5 0.06 210 / 35%);

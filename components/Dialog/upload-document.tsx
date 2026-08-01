@@ -226,7 +226,7 @@ export default function UploadDocumentDialog() {
                 setTitleFromFile(false);
               }}
               placeholder="e.g. Product FAQ, Company handbook…"
-              className="h-11 border-border/70 bg-background/40 transition-all focus-visible:border-cyan-700/35"
+              className="h-11 border-border/70 bg-background/40 text-base transition-all focus-visible:border-cyan-700/35 md:text-sm"
               disabled={isPending}
               required
             />
@@ -247,13 +247,13 @@ export default function UploadDocumentDialog() {
                 disabled={isPending}
                 onClick={() => switchMode("paste")}
                 className={cn(
-                  "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                  "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-medium transition-all sm:gap-2 sm:px-3 sm:text-sm",
                   mode === "paste"
                     ? "bg-muted text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Type className="size-3.5" />
+                <Type className="size-3.5 shrink-0" />
                 Paste text
               </button>
               <button
@@ -263,13 +263,13 @@ export default function UploadDocumentDialog() {
                 disabled={isPending}
                 onClick={() => switchMode("file")}
                 className={cn(
-                  "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                  "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-medium transition-all sm:gap-2 sm:px-3 sm:text-sm",
                   mode === "file"
                     ? "bg-muted text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Upload className="size-3.5" />
+                <Upload className="size-3.5 shrink-0" />
                 Upload file
               </button>
             </div>
@@ -295,7 +295,7 @@ export default function UploadDocumentDialog() {
                   <div className="relative">
                     <Textarea
                       placeholder="Paste your document content here…"
-                      className="min-h-44 max-h-64 resize-none overflow-y-auto border-border/70 bg-background/40 pe-10 transition-all focus-visible:border-cyan-700/35 md:min-h-52"
+                      className="min-h-32 max-h-48 resize-none overflow-y-auto border-border/70 bg-background/40 pe-10 text-base transition-all focus-visible:border-cyan-700/35 sm:min-h-44 sm:max-h-64 md:min-h-52 md:text-sm"
                       name="document"
                       id="document"
                       value={pastedText}
@@ -344,24 +344,26 @@ export default function UploadDocumentDialog() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.18 }}
-                        className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 px-3 py-3"
+                        className="flex flex-col gap-3 rounded-xl border border-border/70 bg-muted/30 px-3 py-3 sm:flex-row sm:items-center"
                       >
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-background/60 text-cyan-400/80 ring-1 ring-border/60">
-                          <FileText className="size-4" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {selectedFile.name}
-                          </p>
-                          <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                            {formatFileSize(selectedFile.size)}
-                            <span className="inline-flex items-center gap-1 text-emerald-400/90">
-                              <CheckCircle2 className="size-3" />
-                              Ready
-                            </span>
-                          </p>
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-background/60 text-cyan-400/80 ring-1 ring-border/60">
+                            <FileText className="size-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">
+                              {selectedFile.name}
+                            </p>
+                            <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                              {formatFileSize(selectedFile.size)}
+                              <span className="inline-flex items-center gap-1 text-emerald-400/90">
+                                <CheckCircle2 className="size-3" />
+                                Ready
+                              </span>
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
+                        <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
                           <Button
                             type="button"
                             variant="outline"
@@ -429,10 +431,16 @@ export default function UploadDocumentDialog() {
                         </span>
                         <div>
                           <p className="text-sm font-medium">
-                            Drag & drop a .txt file here
+                            <span className="sm:hidden">Tap to choose a .txt file</span>
+                            <span className="hidden sm:inline">
+                              Drag & drop a .txt file here
+                            </span>
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            or click to browse · Max 2 MB · PDF/DOCX coming soon
+                            <span className="sm:hidden">Max 2 MB · PDF/DOCX coming soon</span>
+                            <span className="hidden sm:inline">
+                              or click to browse · Max 2 MB · PDF/DOCX coming soon
+                            </span>
                           </p>
                         </div>
                       </motion.div>
@@ -449,10 +457,14 @@ export default function UploadDocumentDialog() {
         </FieldGroup>
       </motion.div>
 
-      <DialogFooter className="mt-2">
+      <DialogFooter className="mt-2 gap-2">
         <DialogClose
           render={
-            <Button variant="outline" disabled={isPending}>
+            <Button
+              variant="outline"
+              disabled={isPending}
+              className="h-11 w-full sm:h-9 sm:w-auto"
+            >
               Cancel
             </Button>
           }
@@ -460,7 +472,7 @@ export default function UploadDocumentDialog() {
         <Button
           type="submit"
           disabled={isPending || !canSubmit}
-          className="min-w-28 gap-2 bg-gradient-to-br from-cyan-700 to-sky-800 text-white shadow-lg shadow-black/25 transition-transform hover:scale-[1.02] hover:from-cyan-600 hover:to-sky-700"
+          className="h-11 w-full min-w-28 gap-2 bg-gradient-to-br from-cyan-700 to-sky-800 text-white shadow-lg shadow-black/25 transition-transform hover:scale-[1.02] hover:from-cyan-600 hover:to-sky-700 sm:h-9 sm:w-auto"
         >
           {isPending ? (
             <>

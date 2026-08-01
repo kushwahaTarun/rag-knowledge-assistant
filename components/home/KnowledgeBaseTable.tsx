@@ -158,128 +158,236 @@ export default function KnowledgeBaseTable({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/60 glass-panel">
-      {/* Horizontal scroll only when needed; uses shadcn ScrollArea (no native table scrollbar) */}
-      <ScrollArea className="w-full">
-        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b border-border/60 bg-muted/30">
-              <th className="w-12 px-4 py-3.5">
-                <Checkbox
-                  checked={allPageSelected}
-                  indeterminate={somePageSelected}
-                  onCheckedChange={() => toggleSelectAllPage()}
-                  aria-label="Select all documents on this page"
-                  className="cursor-pointer"
-                />
-              </th>
-              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                #
-              </th>
-              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Title
-              </th>
-              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Created
-              </th>
-              <th className="w-16 px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <AnimatePresence mode="popLayout" initial={false}>
-              {pageItems.map((document: DocumentType, index: number) => {
-                const rowNumber = (currentPage - 1) * PAGE_SIZE + index + 1;
-                const isSelected = selectedIds.includes(document.id);
-                const isRowDeleting = deletingId === document.id;
-                const isPreviewLoading = previewLoadingId === document.id;
+      {/* Mobile: select-all toolbar */}
+      <div className="flex items-center gap-3 border-b border-border/60 bg-muted/30 px-4 py-3 md:hidden">
+        <Checkbox
+          checked={allPageSelected}
+          indeterminate={somePageSelected}
+          onCheckedChange={() => toggleSelectAllPage()}
+          aria-label="Select all documents on this page"
+          className="cursor-pointer"
+        />
+        <span className="text-xs font-medium text-muted-foreground">
+          Select all on this page
+        </span>
+      </div>
 
-                return (
-                  <motion.tr
-                    key={document.id}
-                    layout
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -12 }}
-                    transition={{
-                      duration: 0.25,
-                      delay: index * 0.03,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                    className={cn(
-                      "group cursor-pointer border-b border-border/50 transition-colors duration-200 last:border-b-0",
-                      "hover:bg-cyan-950/40",
-                      isSelected && "bg-cyan-900/20 hover:bg-cyan-900/25",
-                    )}
-                    onClick={() => documentPreview(document.id)}
+      {/* Mobile card list — no horizontal scroll */}
+      <ul className="divide-y divide-border/50 md:hidden">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {pageItems.map((document: DocumentType, index: number) => {
+            const rowNumber = (currentPage - 1) * PAGE_SIZE + index + 1;
+            const isSelected = selectedIds.includes(document.id);
+            const isRowDeleting = deletingId === document.id;
+            const isPreviewLoading = previewLoadingId === document.id;
+
+            return (
+              <motion.li
+                key={document.id}
+                layout
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{
+                  duration: 0.25,
+                  delay: index * 0.03,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className={cn(
+                  "group cursor-pointer transition-colors duration-200",
+                  "active:bg-cyan-950/40",
+                  isSelected && "bg-cyan-900/20",
+                )}
+                onClick={() => documentPreview(document.id)}
+              >
+                <div className="flex items-start gap-3 px-4 py-3.5">
+                  <div
+                    className="pt-1"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <td
-                      className="px-4 py-3.5"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleSelect(document.id)}
-                        aria-label={`Select ${document.title || "document"}`}
-                        className="cursor-pointer"
-                      />
-                    </td>
-                    <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
-                      {rowNumber}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span
-                          className={cn(
-                            "flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
-                            "bg-gradient-to-br from-muted to-muted/40 text-foreground ring-1 ring-border/60",
-                            "group-hover:from-cyan-900/40 group-hover:to-sky-950/30 group-hover:text-cyan-400/80 group-hover:ring-cyan-800/40",
-                          )}
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleSelect(document.id)}
+                      aria-label={`Select ${document.title || "document"}`}
+                      className="cursor-pointer"
+                    />
+                  </div>
+
+                  <span
+                    className={cn(
+                      "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
+                      "bg-gradient-to-br from-muted to-muted/40 text-foreground ring-1 ring-border/60",
+                    )}
+                  >
+                    {isPreviewLoading ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <FileText className="size-4" />
+                    )}
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium tracking-tight">
+                          {document.title || "Untitled"}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          <span className="tabular-nums">#{rowNumber}</span>
+                          <span className="mx-1.5 text-border">·</span>
+                          <span>{formatDate(document.created_at)}</span>
+                        </p>
+                      </div>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="shrink-0 text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                          disabled={isPending}
+                          onClick={() => handleRowDelete(document.id)}
+                          aria-label={`Delete ${document.title || "document"}`}
                         >
-                          {isPreviewLoading ? (
+                          {isRowDeleting ? (
                             <Loader2 className="size-4 animate-spin" />
                           ) : (
-                            <FileText className="size-4" />
+                            <Trash2 className="size-4" />
                           )}
-                        </span>
-                        <span className="truncate font-medium tracking-tight transition-colors group-hover:text-cyan-200/70">
-                          {document.title || "Untitled"}
-                        </span>
+                        </Button>
                       </div>
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-muted-foreground">
-                      {formatDate(document.created_at)}
-                    </td>
-                    <td
-                      className="px-4 py-3.5 text-right"
-                      onClick={(e) => e.stopPropagation()}
+                    </div>
+                  </div>
+                </div>
+              </motion.li>
+            );
+          })}
+        </AnimatePresence>
+      </ul>
+
+      {/* Desktop table */}
+      <div className="hidden md:block">
+        <ScrollArea className="w-full">
+          <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-border/60 bg-muted/30">
+                <th className="w-12 px-4 py-3.5">
+                  <Checkbox
+                    checked={allPageSelected}
+                    indeterminate={somePageSelected}
+                    onCheckedChange={() => toggleSelectAllPage()}
+                    aria-label="Select all documents on this page"
+                    className="cursor-pointer"
+                  />
+                </th>
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  #
+                </th>
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Title
+                </th>
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Created
+                </th>
+                <th className="w-16 px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence mode="popLayout" initial={false}>
+                {pageItems.map((document: DocumentType, index: number) => {
+                  const rowNumber = (currentPage - 1) * PAGE_SIZE + index + 1;
+                  const isSelected = selectedIds.includes(document.id);
+                  const isRowDeleting = deletingId === document.id;
+                  const isPreviewLoading = previewLoadingId === document.id;
+
+                  return (
+                    <motion.tr
+                      key={document.id}
+                      layout
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: -12 }}
+                      transition={{
+                        duration: 0.25,
+                        delay: index * 0.03,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className={cn(
+                        "group cursor-pointer border-b border-border/50 transition-colors duration-200 last:border-b-0",
+                        "hover:bg-cyan-950/40",
+                        isSelected && "bg-cyan-900/20 hover:bg-cyan-900/25",
+                      )}
+                      onClick={() => documentPreview(document.id)}
                     >
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="text-muted-foreground opacity-70 transition-all duration-200 hover:bg-destructive/15 hover:text-destructive group-hover:opacity-100"
-                        disabled={isPending}
-                        onClick={() => handleRowDelete(document.id)}
-                        aria-label={`Delete ${document.title || "document"}`}
+                      <td
+                        className="px-4 py-3.5"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {isRowDeleting ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="size-4" />
-                        )}
-                      </Button>
-                    </td>
-                  </motion.tr>
-                );
-              })}
-            </AnimatePresence>
-          </tbody>
-        </table>
-      </ScrollArea>
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelect(document.id)}
+                          aria-label={`Select ${document.title || "document"}`}
+                          className="cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
+                        {rowNumber}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span
+                            className={cn(
+                              "flex size-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
+                              "bg-gradient-to-br from-muted to-muted/40 text-foreground ring-1 ring-border/60",
+                              "group-hover:from-cyan-900/40 group-hover:to-sky-950/30 group-hover:text-cyan-400/80 group-hover:ring-cyan-800/40",
+                            )}
+                          >
+                            {isPreviewLoading ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <FileText className="size-4" />
+                            )}
+                          </span>
+                          <span className="truncate font-medium tracking-tight transition-colors group-hover:text-cyan-200/70">
+                            {document.title || "Untitled"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-muted-foreground">
+                        {formatDate(document.created_at)}
+                      </td>
+                      <td
+                        className="px-4 py-3.5 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-muted-foreground opacity-70 transition-all duration-200 hover:bg-destructive/15 hover:text-destructive group-hover:opacity-100"
+                          disabled={isPending}
+                          onClick={() => handleRowDelete(document.id)}
+                          aria-label={`Delete ${document.title || "document"}`}
+                        >
+                          {isRowDeleting ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-4" />
+                          )}
+                        </Button>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        </ScrollArea>
+      </div>
 
       <div className="flex flex-col gap-3 border-t border-border/60 bg-muted/15 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-muted-foreground sm:text-sm">
+        <p className="text-center text-xs text-muted-foreground sm:text-left sm:text-sm">
           Showing{" "}
           <span className="font-medium text-foreground">
             {rangeStart}–{rangeEnd}
@@ -298,12 +406,12 @@ export default function KnowledgeBaseTable({
           )}
         </p>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2 sm:justify-end">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1 border-border/70 bg-background/30 transition-transform hover:scale-[1.02]"
+            className="min-h-9 flex-1 gap-1 border-border/70 bg-background/30 transition-transform hover:scale-[1.02] sm:flex-none"
             disabled={currentPage <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
@@ -311,7 +419,7 @@ export default function KnowledgeBaseTable({
             Prev
           </Button>
 
-          <span className="min-w-20 text-center text-xs text-muted-foreground sm:text-sm">
+          <span className="min-w-16 shrink-0 text-center text-xs text-muted-foreground sm:min-w-20 sm:text-sm">
             Page{" "}
             <span className="font-medium text-foreground">{currentPage}</span>{" "}
             of <span className="font-medium text-foreground">{totalPages}</span>
@@ -321,7 +429,7 @@ export default function KnowledgeBaseTable({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1 border-border/70 bg-background/30 transition-transform hover:scale-[1.02]"
+            className="min-h-9 flex-1 gap-1 border-border/70 bg-background/30 transition-transform hover:scale-[1.02] sm:flex-none"
             disabled={currentPage >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           >

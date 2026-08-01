@@ -43,28 +43,28 @@ export default function ChatPage() {
   if (!chats.length) {
     return (
       <form
-        className="flex h-full min-h-0 w-full flex-1 items-center justify-center overflow-hidden px-4"
+        className="flex h-full min-h-0 w-full flex-1 items-center justify-center overflow-hidden px-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-4"
         onSubmit={handleSubmit}
       >
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="flex w-full max-w-2xl flex-col items-center gap-8"
+          className="flex w-full max-w-2xl flex-col items-center gap-6 sm:gap-8"
         >
-          <div className="flex flex-col items-center text-center">
+          <div className="flex flex-col items-center px-1 text-center">
             <motion.span
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 240, damping: 18 }}
-              className="mb-5 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-800/30 to-sky-900/20 text-cyan-400/80 ring-1 ring-cyan-800/40 shadow-lg shadow-black/15"
+              className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-800/30 to-sky-900/20 text-cyan-400/80 ring-1 ring-cyan-800/40 shadow-lg shadow-black/15 sm:mb-5 sm:size-16"
             >
-              <MessageSquareText className="size-7" />
+              <MessageSquareText className="size-6 sm:size-7" />
             </motion.span>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-4xl">
               <span className="text-gradient">Chat with your knowledge</span>
             </h1>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground sm:mt-3 sm:text-base">
               Ask questions and get answers grounded in the documents
               you&apos;ve uploaded to your knowledge base.
             </p>
@@ -87,10 +87,10 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
-      <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden px-4">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden px-3 sm:px-4">
         <ul
           ref={chatListRef}
-          className="scrollbar-hide flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain py-6"
+          className="scrollbar-hide flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain py-4 sm:gap-4 sm:py-6"
         >
           <AnimatePresence initial={false}>
             {chats.map((chat: Message, index: number) => {
@@ -110,13 +110,13 @@ export default function ChatPage() {
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   className={cn(
-                    "flex max-w-[92%] gap-2.5 sm:max-w-[85%]",
+                    "flex max-w-[min(92%,22rem)] gap-2 sm:max-w-[85%] sm:gap-2.5",
                     isUser ? "ml-auto flex-row-reverse" : "mr-auto",
                   )}
                 >
                   <span
                     className={cn(
-                      "mt-1 flex size-8 shrink-0 items-center justify-center rounded-xl ring-1",
+                      "mt-1 flex size-7 shrink-0 items-center justify-center rounded-xl ring-1 sm:size-8",
                       isUser
                         ? "bg-cyan-900/30 text-cyan-400/80 ring-cyan-800/40"
                         : "bg-muted/80 text-muted-foreground ring-border/60",
@@ -131,7 +131,7 @@ export default function ChatPage() {
 
                   <div
                     className={cn(
-                      "rounded-2xl px-4 py-3 text-[15px] leading-7 shadow-sm",
+                      "min-w-0 break-words rounded-2xl px-3 py-2.5 text-sm leading-6 shadow-sm sm:px-4 sm:py-3 sm:text-[15px] sm:leading-7",
                       isUser
                         ? "rounded-tr-md bg-gradient-to-br from-cyan-800 to-sky-900 text-white shadow-black/25"
                         : "rounded-tl-md border border-border/60 bg-card/70 text-foreground backdrop-blur-sm",
@@ -148,12 +148,12 @@ export default function ChatPage() {
             <motion.li
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mr-auto flex max-w-[85%] items-center gap-2.5"
+              className="mr-auto flex max-w-[85%] items-center gap-2 sm:gap-2.5"
             >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-muted/80 text-muted-foreground ring-1 ring-border/60">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-muted/80 text-muted-foreground ring-1 ring-border/60 sm:size-8">
                 <Bot className="size-3.5" />
               </span>
-              <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-md border border-border/60 bg-card/70 px-4 py-3 backdrop-blur-sm">
+              <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-md border border-border/60 bg-card/70 px-3 py-2.5 backdrop-blur-sm sm:px-4 sm:py-3">
                 <span className="text-sm text-muted-foreground">Thinking</span>
                 <span
                   className="inline-flex items-end gap-1.5 pb-0.5"
@@ -170,7 +170,7 @@ export default function ChatPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="w-full shrink-0 border-t border-border/40 bg-gradient-to-t from-background via-background/95 to-transparent py-4"
+          className="w-full shrink-0 border-t border-border/40 bg-gradient-to-t from-background via-background/95 to-transparent py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:py-4"
         >
           <UserQueryTextAreaAndOptions isPending={isStreaming} compact />
         </form>

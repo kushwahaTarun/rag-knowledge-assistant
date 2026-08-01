@@ -41,10 +41,10 @@ export default function RootLayout({
         <SidebarProvider className="!h-full !min-h-0">
           <AppSidebar />
           <SidebarInset className="mesh-bg min-h-0 min-w-0 overflow-hidden">
-            <header className="glass-soft relative z-10 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 px-4">
-              <SidebarTrigger className="transition-transform duration-200 hover:scale-105" />
-              <div className="h-4 w-px bg-border/70" />
-              <p className="text-xs font-medium tracking-wide text-muted-foreground sm:text-sm">
+            <header className="glass-soft relative z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 px-3 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4">
+              <SidebarTrigger className="shrink-0 transition-transform duration-200 hover:scale-105" />
+              <div className="h-4 w-px shrink-0 bg-border/70" />
+              <p className="min-w-0 truncate text-xs font-medium tracking-wide text-muted-foreground sm:text-sm">
                 Intelligent document search & chat
               </p>
             </header>

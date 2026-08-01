@@ -123,7 +123,6 @@ export async function askQuestion(req, res, next) {
 
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     res.end();
-
   } catch (err) {
     next(err);
   }
