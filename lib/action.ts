@@ -2,8 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 
-import { chatFormState } from "@/interfaces/chat";
-
 type UploadState = {
   error: string;
   document_id?: string;
@@ -78,69 +76,6 @@ export async function uploadDocument(
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Something went wrong",
-    };
-  }
-}
-
-// Function that makes an API call to get the user query response
-export async function submitQuery(
-  prevState: chatFormState,
-  formData: FormData,
-): Promise<chatFormState> {
-  const rawQuery = formData.get("user-query");
-  const userQuery = typeof rawQuery === "string" ? rawQuery.trim() : "";
-
-  // Empty query: keep existing history, surface an error
-  if (!userQuery) {
-    return {
-      error: "Please provide your query",
-      chats: prevState.chats,
-    };
-  }
-
-  // Build chats with the user message first (source of truth for the client after return)
-  const chatsWithUser = [
-    ...prevState.chats,
-    {
-      role: "user" as const,
-      content: userQuery,
-    },
-  ];
-
-  try {
-    const response = await fetch(`${process.env.BACKEND_BASE_URL}/api/ask`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        question: userQuery,
-      }),
-    });
-
-    if (!response.ok) {
-      return {
-        error: "Failed to get a response",
-        chats: chatsWithUser,
-      };
-    }
-
-    const result = await response.json();
-
-    return {
-      error: "",
-      chats: [
-        ...chatsWithUser,
-        {
-          role: "assistant",
-          content: result.answer,
-        },
-      ],
-    };
-  } catch {
-    return {
-      error: "Something went wrong",
-      chats: chatsWithUser,
     };
   }
 }

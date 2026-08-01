@@ -15,6 +15,8 @@ import { toast } from "sonner";
 
 import { deleteDocument, handleDocumentPreview } from "@/lib/action";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import DocumentPreview from "@/components/Dialog/document-preview";
 import {
   DocumentType,
@@ -156,20 +158,18 @@ export default function KnowledgeBaseTable({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/60 glass-panel">
-      <div className="overflow-x-auto">
+      {/* Horizontal scroll only when needed; uses shadcn ScrollArea (no native table scrollbar) */}
+      <ScrollArea className="w-full">
         <table className="w-full min-w-[640px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-border/60 bg-muted/30">
               <th className="w-12 px-4 py-3.5">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={allPageSelected}
-                  ref={(el) => {
-                    if (el) el.indeterminate = somePageSelected;
-                  }}
-                  onChange={toggleSelectAllPage}
+                  indeterminate={somePageSelected}
+                  onCheckedChange={() => toggleSelectAllPage()}
                   aria-label="Select all documents on this page"
-                  className="size-4 cursor-pointer rounded border-border accent-primary transition-transform duration-150 hover:scale-110"
+                  className="cursor-pointer"
                 />
               </th>
               <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -217,12 +217,11 @@ export default function KnowledgeBaseTable({
                       className="px-4 py-3.5"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={isSelected}
-                        onChange={() => toggleSelect(document.id)}
+                        onCheckedChange={() => toggleSelect(document.id)}
                         aria-label={`Select ${document.title || "document"}`}
-                        className="size-4 cursor-pointer rounded border-border accent-primary transition-transform duration-150 hover:scale-110"
+                        className="cursor-pointer"
                       />
                     </td>
                     <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
@@ -277,7 +276,7 @@ export default function KnowledgeBaseTable({
             </AnimatePresence>
           </tbody>
         </table>
-      </div>
+      </ScrollArea>
 
       <div className="flex flex-col gap-3 border-t border-border/60 bg-muted/15 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground sm:text-sm">

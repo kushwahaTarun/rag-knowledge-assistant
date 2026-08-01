@@ -2,7 +2,7 @@ import { supabase } from "../db/supabaseClient.js";
 
 import { storeDocument } from "../services/document-service.js";
 import { searchChunks } from "../services/search-service.js";
-import { generateAnswer } from "../services/ai-service.js";
+import { streamAnswer } from "../services/ai-service.js";
 
 export async function getDocuments(req, res, next) {
   try {
@@ -113,8 +113,17 @@ export async function askQuestion(req, res, next) {
     }
 
     const matched_chunks = await searchChunks(question);
-    const answer = await generateAnswer(question, matched_chunks);
-    res.status(200).json({ answer });
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    for await (const chunk of streamAnswer(question, matched_chunks)) {
+      res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+    }
+
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    res.end();
+
   } catch (err) {
     next(err);
   }

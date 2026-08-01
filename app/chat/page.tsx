@@ -1,47 +1,34 @@
 "use client";
 
-import {
-  useActionState,
-  useEffect,
-  useOptimistic,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, MessageSquareText, User } from "lucide-react";
 
 import UserQueryTextAreaAndOptions from "@/components/ChatInterface/user-query-section";
-import { submitQuery } from "@/lib/action";
-import { Message, chatFormState } from "@/interfaces/chat";
+import { Message } from "@/interfaces/chat";
+import { createHandleSubmit } from "@/lib/stream-answer";
 import { cn } from "@/lib/utils";
 
 export default function ChatPage() {
-  // 1) Initial state for useActionState — empty chat + no error
-  const initialState: chatFormState = {
-    error: "",
-    chats: [],
-  };
-
-  // 2) Real server state — only updates when submitQuery RETURNS
-  const [state, formAction, isPending] = useActionState(
-    submitQuery,
-    initialState,
-  );
-
-  // Local flag — more reliable than isPending alone when formAction is wrapped
-  const [isThinking, setIsThinking] = useState(false);
-
-  // 3) Optimistic chats — starts as state.chats; can append UI-only messages instantly
-  //    When the server action finishes, React replaces this with the new state.chats
-  const [optimisticChats, addOptimisticChat] = useOptimistic(
-    state.chats,
-    (currentChats, newMessage: Message) => [...currentChats, newMessage],
-  );
+  // State lives HERE (in the component). Helpers only receive setters as args.
+  const [chats, setChats] = useState<Message[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const chatListRef = useRef<HTMLUListElement>(null);
-  const showThinking = isThinking || isPending;
 
-  // 4) Scroll when optimistic list changes (user bubble appears immediately, then assistant)
+  // Pass state + setters into the lib helper so it can update UI
+  const handleSubmit = useMemo(
+    () =>
+      createHandleSubmit({
+        isStreaming,
+        setChats,
+        setIsStreaming,
+      }),
+    [isStreaming],
+  );
+
+  // Keep the message list scrolled to the latest content
   useEffect(() => {
     const list = chatListRef.current;
     if (!list) return;
@@ -50,35 +37,14 @@ export default function ChatPage() {
       top: list.scrollHeight,
       behavior: "smooth",
     });
-  }, [optimisticChats, showThinking]);
+  }, [chats, isStreaming]);
 
-  // 5) Client wrapper: show user message first, THEN run the server action
-  async function dispatchQuery(formData: FormData) {
-    const userQuery = String(formData.get("user-query") ?? "").trim();
-
-    // Instant UI update — does not wait for the network
-    if (userQuery) {
-      addOptimisticChat({
-        role: "user",
-        content: userQuery,
-      });
-      setIsThinking(true);
-    }
-
-    try {
-      // Real request — isPending becomes true; state updates on return
-      await formAction(formData);
-    } finally {
-      setIsThinking(false);
-    }
-  }
-
-  // 6) Empty screen: no messages yet (use optimistic length so first send switches layout)
-  if (!optimisticChats.length) {
+  // Empty screen: no messages yet
+  if (!chats.length) {
     return (
       <form
         className="flex h-full min-h-0 w-full flex-1 items-center justify-center overflow-hidden px-4"
-        action={dispatchQuery}
+        onSubmit={handleSubmit}
       >
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -99,13 +65,13 @@ export default function ChatPage() {
               <span className="text-gradient">Chat with your knowledge</span>
             </h1>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Ask questions and get answers grounded in the documents you&apos;ve
-              uploaded to your knowledge base.
+              Ask questions and get answers grounded in the documents
+              you&apos;ve uploaded to your knowledge base.
             </p>
           </div>
 
           <UserQueryTextAreaAndOptions
-            isPending={showThinking}
+            isPending={isStreaming}
             className="w-full"
           />
         </motion.div>
@@ -113,7 +79,12 @@ export default function ChatPage() {
     );
   }
 
-  // 7) Chat screen: list scrolls; textarea stays pinned at the bottom
+  // Chat screen: list scrolls; textarea stays pinned at the bottom
+  const showThinking =
+    isStreaming &&
+    chats[chats.length - 1]?.role === "assistant" &&
+    !chats[chats.length - 1]?.content;
+
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
       <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden px-4">
@@ -122,12 +93,16 @@ export default function ChatPage() {
           className="scrollbar-hide flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain py-6"
         >
           <AnimatePresence initial={false}>
-            {optimisticChats.map((chat: Message, index: number) => {
+            {chats.map((chat: Message, index: number) => {
               const isUser = chat.role === "user";
+              // Hide empty assistant bubble until first token (thinking row shows instead)
+              if (!isUser && !chat.content && isStreaming) {
+                return null;
+              }
 
               return (
                 <motion.li
-                  key={`${chat.role}-${index}-${chat.content.slice(0, 24)}`}
+                  key={`${chat.role}-${index}`}
                   initial={{ opacity: 0, y: 12, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{
@@ -169,7 +144,6 @@ export default function ChatPage() {
             })}
           </AnimatePresence>
 
-          {/* Thinking animation */}
           {showThinking && (
             <motion.li
               initial={{ opacity: 0, y: 8 }}
@@ -181,7 +155,10 @@ export default function ChatPage() {
               </span>
               <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-md border border-border/60 bg-card/70 px-4 py-3 backdrop-blur-sm">
                 <span className="text-sm text-muted-foreground">Thinking</span>
-                <span className="inline-flex items-end gap-1.5 pb-0.5" aria-hidden>
+                <span
+                  className="inline-flex items-end gap-1.5 pb-0.5"
+                  aria-hidden
+                >
                   <span className="thinking-dot" />
                   <span className="thinking-dot thinking-dot-delay-1" />
                   <span className="thinking-dot thinking-dot-delay-2" />
@@ -192,10 +169,10 @@ export default function ChatPage() {
         </ul>
 
         <form
-          action={dispatchQuery}
+          onSubmit={handleSubmit}
           className="w-full shrink-0 border-t border-border/40 bg-gradient-to-t from-background via-background/95 to-transparent py-4"
         >
-          <UserQueryTextAreaAndOptions isPending={showThinking} compact />
+          <UserQueryTextAreaAndOptions isPending={isStreaming} compact />
         </form>
       </div>
     </div>
