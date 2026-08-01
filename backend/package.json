@@ -19,10 +19,14 @@
   },
   "homepage": "https://github.com/kushwahaTarun/rag-knowledge-assistant#readme",
   "dependencies": {
+    "@ai-sdk/xai": "^4.0.20",
     "@google/genai": "^2.12.0",
     "@supabase/supabase-js": "^2.110.7",
+    "ai": "^7.0.40",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "multer": "^2.2.0",
+    "zod": "^4.4.3"
   }
 }

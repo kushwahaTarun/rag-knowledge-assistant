@@ -6,7 +6,7 @@ import { generateEmbedding } from "./ai-service.js";
 export async function storeDocument(title, fullText) {
   const { data: document, error: docError } = await supabase
     .from("documents")
-    .insert([{ title }])
+    .insert([{ title, content: fullText }])
     .select()
     .single();
 
