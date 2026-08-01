@@ -3,12 +3,9 @@ import { Poppins, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AppHeader } from "@/components/app-header";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -41,13 +38,7 @@ export default function RootLayout({
         <SidebarProvider className="!h-full !min-h-0">
           <AppSidebar />
           <SidebarInset className="mesh-bg min-h-0 min-w-0 overflow-hidden">
-            <header className="glass-soft relative z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 px-3 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4">
-              <SidebarTrigger className="shrink-0 transition-transform duration-200 hover:scale-105" />
-              <div className="h-4 w-px shrink-0 bg-border/70" />
-              <p className="min-w-0 truncate text-xs font-medium tracking-wide text-muted-foreground sm:text-sm">
-                Intelligent document search & chat
-              </p>
-            </header>
+            <AppHeader />
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
               {children}
             </div>

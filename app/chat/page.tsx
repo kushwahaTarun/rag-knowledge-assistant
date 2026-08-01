@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, MessageSquareText, User } from "lucide-react";
 
 import UserQueryTextAreaAndOptions from "@/components/ChatInterface/user-query-section";
 import { Message } from "@/interfaces/chat";
+import { onNewChatRequest } from "@/lib/chat-session";
 import { createHandleSubmit } from "@/lib/stream-answer";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,14 @@ export default function ChatPage() {
       }),
     [isStreaming],
   );
+
+  const handleNewChat = useCallback(() => {
+    if (isStreaming) return;
+    setChats([]);
+  }, [isStreaming]);
+
+  // Header "New chat" icon uses a window event so it can clear without lifting chat state
+  useEffect(() => onNewChatRequest(handleNewChat), [handleNewChat]);
 
   // Keep the message list scrolled to the latest content
   useEffect(() => {
@@ -87,7 +96,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
-      <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden px-3 sm:px-4">
+      <div className="relative mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden px-3 sm:px-4">
         <ul
           ref={chatListRef}
           className="scrollbar-hide flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain py-4 sm:gap-4 sm:py-6"
@@ -170,7 +179,7 @@ export default function ChatPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="w-full shrink-0 border-t border-border/40 bg-gradient-to-t from-background via-background/95 to-transparent py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:py-4"
+          className="w-full shrink-0 bg-gradient-to-t from-background via-background/95 to-transparent pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pt-3 sm:pb-4"
         >
           <UserQueryTextAreaAndOptions isPending={isStreaming} compact />
         </form>

@@ -200,9 +200,9 @@ export default function KnowledgeBaseTable({
                 )}
                 onClick={() => documentPreview(document.id)}
               >
-                <div className="flex items-start gap-3 px-4 py-3.5">
+                <div className="flex items-center gap-3 px-4 py-3.5">
                   <div
-                    className="pt-1"
+                    className="flex shrink-0 items-center justify-center"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Checkbox
@@ -215,7 +215,7 @@ export default function KnowledgeBaseTable({
 
                   <span
                     className={cn(
-                      "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
+                      "flex size-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
                       "bg-gradient-to-br from-muted to-muted/40 text-foreground ring-1 ring-border/60",
                     )}
                   >
