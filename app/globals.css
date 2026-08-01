@@ -131,6 +131,41 @@
     background: oklch(0.5 0.06 210 / 35%);
     color: oklch(0.95 0.01 230);
   }
+
+  /*
+   * Global scrollbars — soft shadcn-like track/thumb everywhere
+   * (native overflow + fallback when ScrollArea is not used)
+   */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.58 0.02 230 / 40%) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: oklch(0.58 0.02 230 / 35%);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(0.68 0.03 220 / 50%);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 @layer utilities {

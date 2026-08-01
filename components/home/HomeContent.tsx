@@ -15,9 +15,13 @@ export async function HomeContent() {
   const result = await response.json();
   const documents = result.documents ?? [];
 
+  // Outer full-width scroller → scrollbar sits at the page edge (SidebarInset),
+  // not hugging the table. Inner container keeps content centered.
   return (
-    <section className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-y-auto px-4 py-8 sm:px-6 sm:py-10">
-      <KnowledgeBaseClient documents={documents} />
-    </section>
+    <div className="h-full min-h-0 w-full overflow-y-auto overflow-x-hidden">
+      <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+        <KnowledgeBaseClient documents={documents} />
+      </section>
+    </div>
   );
 }
