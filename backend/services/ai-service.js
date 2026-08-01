@@ -19,7 +19,7 @@ export async function generateEmbedding(chunk) {
   }
 }
 
-export async function generateAnswer(question, matched_chunks) {
+export async function* streamAnswer(question, matched_chunks) {
   try {
     const context = matched_chunks.map((chunk) => chunk.content).join("\n\n");
 
@@ -28,9 +28,15 @@ export async function generateAnswer(question, matched_chunks) {
       model: process.env.GEMINI_MODEL,
       system_instruction: systemPrompt,
       input: prompt,
+      stream: true,
     });
 
-    return interaction.output_text;
+    for await (const event of interaction) {
+      if (event.event_type === "step.delta" && event.delta?.type == "text") {
+        yield event.delta.text;
+      }
+    }
+
   } catch (err) {
     // QUOTA/RATE LIMIT EXCEEDED SO START USING THE GROK MODEL
     if (err.status === 429) {
