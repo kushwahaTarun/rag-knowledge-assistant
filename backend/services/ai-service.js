@@ -36,9 +36,6 @@ export async function* streamAnswer(question, matched_chunks) {
   } catch (err) {
     // QUOTA/RATE LIMIT EXCEEDED SO START USING THE OPENROUTER MODEL
     if (err.status === 429) {
-      console.log(
-        "Falling back to OpenRouter model due to quota/rate limit exceeded",
-      );
       // Stream the response to get reasoning tokens in usage
       const stream = await openrouter.chat.send({
         chatRequest: {
