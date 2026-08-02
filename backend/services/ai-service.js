@@ -1,7 +1,4 @@
-import { xai } from "@ai-sdk/xai";
-import { generateText } from "ai";
-
-import { ai } from "../utils/ai.js";
+import { ai, openrouter } from "../utils/ai.js";
 import { systemPrompt } from "../prompts/system-prompt.js";
 
 // generate embedding for a chunk using the gemini embedding model
@@ -20,10 +17,10 @@ export async function generateEmbedding(chunk) {
 }
 
 export async function* streamAnswer(question, matched_chunks) {
-  try {
-    const context = matched_chunks.map((chunk) => chunk.content).join("\n\n");
+  const context = matched_chunks.map((chunk) => chunk.content).join("\n\n");
 
-    const prompt = `Context:\n${context}\n\nQuestion: ${question}`;
+  const prompt = `Context:\n${context}\n\nQuestion: ${question}`;
+  try {
     const interaction = await ai.interactions.create({
       model: process.env.GEMINI_MODEL,
       system_instruction: systemPrompt,
@@ -36,17 +33,34 @@ export async function* streamAnswer(question, matched_chunks) {
         yield event.delta.text;
       }
     }
-
   } catch (err) {
-    // QUOTA/RATE LIMIT EXCEEDED SO START USING THE GROK MODEL
+    // QUOTA/RATE LIMIT EXCEEDED SO START USING THE OPENROUTER MODEL
     if (err.status === 429) {
-      const { text, response } = await generateText({
-        model: xai.responses(process.env.GROK_MODEL),
-        system: systemPrompt,
-        prompt: prompt,
+      // Stream the response to get reasoning tokens in usage
+      const stream = await openrouter.chat.send({
+        chatRequest: {
+          model: process.env.OPENROUTER_MODEL,
+          messages: [
+            {
+              content: systemPrompt,
+              role: "system",
+            },
+            {
+              content: prompt,
+              role: "user",
+            },
+          ],
+          stream: true,
+        },
       });
 
-      return text;
+      for await (const chunk of stream) {
+        const text = chunk.choices?.[0]?.delta?.content;
+        if (text) {
+          yield text;
+        }
+      }
+      return;
     }
     throw new Error(err.message);
   }
