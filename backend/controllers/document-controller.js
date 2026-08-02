@@ -3,6 +3,7 @@ import { supabase } from "../db/supabaseClient.js";
 import { storeDocument } from "../services/document-service.js";
 import { searchChunks } from "../services/search-service.js";
 import { streamAnswer } from "../services/ai-service.js";
+import { extractTextFromFile } from "../utils/extract-text.js";
 
 export async function getDocuments(req, res, next) {
   try {
@@ -28,7 +29,7 @@ export async function getDocumentContent(req, res, next) {
 
     const { data, error } = await supabase
       .from("documents")
-      .select("title, content")
+      .select("title, content, file_url")
       .eq("id", id)
       .single();
 
@@ -53,6 +54,20 @@ export async function deleteDocument(req, res, next) {
       return res
         .status(400)
         .json({ error: "Id of the document is required to delete a document" });
+    }
+
+    // Read file_url before deleting the row
+    const { data: doc, error: fetchError } = await supabase
+      .from("documents")
+      .select("file_url")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Remove from bucket if present
+    if (doc?.file_url) {
+      await removeDocumentFile(doc.file_url);
     }
 
     const { error } = await supabase.from("documents").delete().eq("id", id);
@@ -82,20 +97,22 @@ export async function createDocument(req, res, next) {
     let text = "";
 
     if (req.file) {
-      text = req.file.buffer.toString("utf-8");
+      text = await extractTextFromFile(req.file);
     } else if (fullText) {
       text = fullText;
     } else {
       return res
         .status(400)
-        .json({ error: "Please provide a .txt file or the text" });
+        .json({
+          error: "Please provide a .txt, .pdf, or .docx file, or paste text",
+        });
     }
 
     if (!text.trim()) {
       return res.status(400).json({ message: "Document cannot be empty" });
     }
 
-    const result = await storeDocument(title, text);
+    const result = await storeDocument(title, text, req.file ?? null);
     res.status(201).json(result);
   } catch (err) {
     next(err);

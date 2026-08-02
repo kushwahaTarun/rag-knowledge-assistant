@@ -10,7 +10,7 @@ type UploadState = {
 // Function that makes an API call to upload the document to the DB
 // Supports two sources from the dialog:
 // 1) Paste mode  → form field "document" (plain text)
-// 2) File mode   → form field "file" (.txt File)
+// 2) File mode   → form field "file" (.txt / .pdf / .docx)
 export async function uploadDocument(
   prevState: UploadState,
   formData: FormData,
@@ -29,7 +29,8 @@ export async function uploadDocument(
 
   if (!hasFile && !hasPaste) {
     return {
-      error: "Knowledge cannot be empty. Paste text or upload a .txt file",
+      error:
+        "Knowledge cannot be empty. Paste text or upload a .txt, .pdf, or .docx file",
     };
   }
 

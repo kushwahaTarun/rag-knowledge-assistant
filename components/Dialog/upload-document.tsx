@@ -37,7 +37,16 @@ import { cn } from "@/lib/utils";
 
 type SourceMode = "paste" | "file";
 
-const MAX_TXT_BYTES = 2 * 1024 * 1024; // 2 MB
+const MAX_FILE_BYTES = 2 * 1024 * 1024; // 2 MB
+
+const ALLOWED_MIME_TYPES = new Set([
+  "text/plain",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+
+const FILE_ACCEPT =
+  ".txt,.pdf,.docx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -45,9 +54,13 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function isPlainTextFile(file: File) {
+/** Accept .txt, .pdf, and .docx (MIME can be empty on some browsers — fall back to extension) */
+function isSupportedUploadFile(file: File) {
   const name = file.name.toLowerCase();
-  return file.type === "text/plain" || name.endsWith(".txt");
+  const byExt =
+    name.endsWith(".txt") || name.endsWith(".pdf") || name.endsWith(".docx");
+  const byMime = file.type ? ALLOWED_MIME_TYPES.has(file.type) : false;
+  return byExt || byMime;
 }
 
 function titleFromFileName(name: string) {
@@ -117,9 +130,9 @@ export default function UploadDocumentDialog() {
   const acceptFile = (file: File | null | undefined) => {
     if (!file) return;
 
-    if (!isPlainTextFile(file)) {
+    if (!isSupportedUploadFile(file)) {
       setSelectedFile(null);
-      setFileError("Only .txt files are supported right now");
+      setFileError("Only .txt, .pdf, and .docx files are supported");
       syncFileInput(null);
       return;
     }
@@ -131,7 +144,7 @@ export default function UploadDocumentDialog() {
       return;
     }
 
-    if (file.size > MAX_TXT_BYTES) {
+    if (file.size > MAX_FILE_BYTES) {
       setSelectedFile(null);
       setFileError("File is too large (max 2 MB)");
       syncFileInput(null);
@@ -200,8 +213,8 @@ export default function UploadDocumentDialog() {
             Upload document
           </DialogTitle>
           <DialogDescription className="mt-1 text-sm leading-relaxed">
-            Paste text or upload a .txt file. Content is chunked and embedded
-            for search and chat.
+            Paste text or upload a .txt, .pdf, or .docx file. Content is chunked
+            and embedded for search and chat.
           </DialogDescription>
         </div>
       </DialogHeader>
@@ -317,7 +330,9 @@ export default function UploadDocumentDialog() {
                 className="space-y-3"
               >
                 <Field>
-                  <Label className="text-muted-foreground">Text file</Label>
+                  <Label className="text-muted-foreground">
+                    Document file (.txt, .pdf, .docx)
+                  </Label>
 
                   {/* Hidden real file input — dropzone triggers it */}
                   <input
@@ -325,7 +340,7 @@ export default function UploadDocumentDialog() {
                     id={fileInputId}
                     type="file"
                     name="file"
-                    accept=".txt,text/plain"
+                    accept={FILE_ACCEPT}
                     className="sr-only"
                     disabled={isPending}
                     onChange={onFileInputChange}
@@ -431,15 +446,17 @@ export default function UploadDocumentDialog() {
                         </span>
                         <div>
                           <p className="text-sm font-medium">
-                            <span className="sm:hidden">Tap to choose a .txt file</span>
+                            <span className="sm:hidden">
+                              Tap to choose a .txt, .pdf, or .docx file
+                            </span>
                             <span className="hidden sm:inline">
-                              Drag & drop a .txt file here
+                              Drag & drop a .txt, .pdf, or .docx file here
                             </span>
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            <span className="sm:hidden">Max 2 MB · PDF/DOCX coming soon</span>
+                            <span className="sm:hidden">Max 2 MB</span>
                             <span className="hidden sm:inline">
-                              or click to browse · Max 2 MB · PDF/DOCX coming soon
+                              or click to browse · Max 2 MB
                             </span>
                           </p>
                         </div>
