@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -14,15 +14,28 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 
+type DocumentPreviewContent = {
+  title?: string;
+  content?: string;
+  file_url?: string | null;
+};
+
 // interface for the component props
 interface propsType {
-  documentContent: {
-    title?: string;
-    content?: string;
-  };
-  setDocumentContent: (state: { title?: string; content?: string }) => void;
+  documentContent: DocumentPreviewContent;
+  setDocumentContent: (state: DocumentPreviewContent) => void;
   documentDialogue: boolean;
   setDocumentDialogue: (state: boolean) => void;
+}
+
+function getFileKind(fileUrl: string | null | undefined) {
+  if (!fileUrl) return "none" as const;
+
+  const lower = fileUrl.toLowerCase();
+  if (lower.includes(".pdf")) return "pdf" as const;
+  if (lower.includes(".docx")) return "docx" as const;
+  if (lower.includes(".txt") || lower.includes("text/plain")) return "txt" as const;
+  return "other" as const;
 }
 
 export default function DocumentPreview({
@@ -32,6 +45,11 @@ export default function DocumentPreview({
   setDocumentDialogue,
 }: propsType) {
   const isMobile = useIsMobile();
+  const fileUrl = documentContent.file_url ?? null;
+  const kind = getFileKind(fileUrl);
+  const isPdf = kind === "pdf";
+  const isDocx = kind === "docx";
+  const showTextBody = !isPdf;
 
   // triggers when user click on the submit button
   const handleClose = () => {
@@ -67,17 +85,57 @@ export default function DocumentPreview({
                 {documentContent.title || "Document preview"}
               </DrawerTitle>
               <p className="mt-1 text-xs text-muted-foreground">
-                Full document content from your knowledge base
+                {isPdf
+                  ? "Original PDF from storage"
+                  : isDocx
+                    ? "Extracted text preview — download for the original file"
+                    : "Full document content from your knowledge base"}
               </p>
             </div>
           </div>
         </DrawerHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
-          <div className="rounded-xl border border-border/50 bg-background/40 p-3 sm:p-5">
-            <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground/90 sm:text-base sm:leading-7">
-              {documentContent.content ?? "No document content available"}
-            </p>
+          <div className="space-y-3 rounded-xl border border-border/50 bg-background/40 p-3 sm:p-5">
+            {/* DOCX: browser cannot render natively — offer download + show extracted text */}
+            {isDocx && fileUrl ? (
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 underline-offset-4 hover:underline"
+              >
+                <ExternalLink className="size-3.5 shrink-0" />
+                Download original file
+              </a>
+            ) : null}
+
+            {/* PDF: iframe against public file_url */}
+            {isPdf && fileUrl ? (
+              <>
+                <iframe
+                  title={documentContent.title || "PDF preview"}
+                  src={fileUrl}
+                  className="h-[min(70vh,32rem)] w-full rounded-lg border border-border/50 bg-background"
+                />
+                <a
+                  href={fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 underline-offset-4 hover:underline"
+                >
+                  <ExternalLink className="size-3.5 shrink-0" />
+                  Open PDF in new tab
+                </a>
+              </>
+            ) : null}
+
+            {/* Paste / .txt / .docx / other: show extracted or pasted content */}
+            {showTextBody ? (
+              <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground/90 sm:text-base sm:leading-7">
+                {documentContent.content ?? "No document content available"}
+              </p>
+            ) : null}
           </div>
         </div>
 
