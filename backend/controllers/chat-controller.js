@@ -45,3 +45,45 @@ export async function getAllConversations(req, res, next) {
     next(error);
   }
 }
+
+// FUNCTION THAT STORES THE CHAT MESSAGES TO THE DB BELONG TO THE CONVERSATION
+export async function addMessageToConversation(req, res, next) {
+  const { role, content } = req.body;
+  const { id } = req.params;
+
+  // if the user role or the message is missing so returning an error
+  if (!role || !content.trim()) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Role and content are required" });
+  }
+
+  // if the conversation id doesn't exists so returning an error to the user
+  if (!id) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Conversation doesn't exists" });
+  }
+
+  try {
+    // Must await — without it, data/error are from a Promise object (always undefined)
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({ role, content, conversation_id: id })
+      .select();
+
+    // incase of error throwing the error to the next middleware
+    if (error) {
+      throw error;
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: data[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// 71d442b2-88b9-4c9b-9ee3-e363dd0c1a5a
