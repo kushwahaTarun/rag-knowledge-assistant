@@ -86,4 +86,32 @@ export async function addMessageToConversation(req, res, next) {
   }
 }
 
-// 71d442b2-88b9-4c9b-9ee3-e363dd0c1a5a
+// FUNCTION THAT RETURNS ALL THE CHATS PRESENT INSIDE THE CONVERSATION
+export async function conversationAllChats(req, res, next) {
+  const { id } = req.params;
+
+  // returning an error if the conversation id is missing
+  if (!id) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Conversation ID is required" });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("*, messages(*)")
+      .eq("id", id);
+
+    if (error) {
+      throw error;
+    }
+
+    return res.status(200).json({
+      success: true,
+      conversation: data[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+}

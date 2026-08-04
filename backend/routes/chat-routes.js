@@ -3,6 +3,7 @@ import {
   createConversation,
   getAllConversations,
   addMessageToConversation,
+  conversationAllChats,
 } from "../controllers/chat-controller.js";
 
 const router = express.Router();
@@ -15,5 +16,8 @@ router.get("/conversations", getAllConversations);
 
 // ENDPOINT THAT STORES THE USER/ASSISTANT MESSAGES BELONG TO THE CONVERSATION IN THE DB
 router.post("/conversations/:id/messages", addMessageToConversation);
+
+// ENDPOINT THAT RETURNS ALL THE CHAT PRESENT INSIDE THE CONVERSATION
+router.get("/conversations/:id", conversationAllChats);
 
 export default router;
