@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, MessageSquareText, User } from "lucide-react";
 
@@ -9,7 +10,7 @@ import UserQueryTextAreaAndOptions from "@/components/ChatInterface/user-query-s
 import { Message } from "@/interfaces/chat";
 import { onNewChatRequest } from "@/lib/chat-session";
 import { createHandleSubmit } from "@/lib/stream-answer";
-import { cn } from "@/lib/utils";
+import { cn, displayConversationChats } from "@/lib/utils";
 
 export default function ChatPage() {
   // State lives HERE (in the component). Helpers only receive setters as args.
@@ -18,21 +19,47 @@ export default function ChatPage() {
 
   const chatListRef = useRef<HTMLUListElement>(null);
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get("c");
+
   // Pass state + setters into the lib helper so it can update UI
+  // conversationId must be in deps so continue-chat saves hit the right thread
   const handleSubmit = useMemo(
     () =>
       createHandleSubmit({
         isStreaming,
         setChats,
         setIsStreaming,
+        conversationId,
+        router,
       }),
-    [isStreaming],
+    [isStreaming, conversationId, router],
   );
 
+  // New chat: clear ?c= so we don't re-load the old conversation from the URL
   const handleNewChat = useCallback(() => {
     if (isStreaming) return;
     setChats([]);
-  }, [isStreaming]);
+    router.replace("/chat");
+  }, [isStreaming, router]);
+
+  const getConversationChats = useCallback(async () => {
+    if (!conversationId) {
+      setChats([]);
+      return;
+    }
+
+    const result = await displayConversationChats(conversationId);
+    if (result.success) {
+      setChats(result.conversation?.messages);
+    }
+  }, [conversationId]);
+
+  // useCallback only CREATES the function — you must call it in useEffect
+  useEffect(() => {
+    void getConversationChats();
+  }, [getConversationChats]);
 
   // Header "New chat" icon uses a window event so it can clear without lifting chat state
   useEffect(() => onNewChatRequest(handleNewChat), [handleNewChat]);
