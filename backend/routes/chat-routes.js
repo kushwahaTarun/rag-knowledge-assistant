@@ -4,6 +4,7 @@ import {
   getAllConversations,
   addMessageToConversation,
   conversationAllChats,
+  deleteConversation,
 } from "../controllers/chat-controller.js";
 
 const router = express.Router();
@@ -19,5 +20,8 @@ router.post("/conversations/:id/messages", addMessageToConversation);
 
 // ENDPOINT THAT RETURNS ALL THE CHAT PRESENT INSIDE THE CONVERSATION
 router.get("/conversations/:id", conversationAllChats);
+
+// ENDPOINT THAT DELETES A CONVERSATION AND ALL THE CHATS INSIDE IT
+router.delete("/conversations/:id", deleteConversation);
 
 export default router;

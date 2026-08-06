@@ -115,3 +115,31 @@ export async function conversationAllChats(req, res, next) {
     next(error);
   }
 }
+
+// FUNCTION THAT DELETES A CONVERSATION AND ALL THE CHATS INSIDE IT
+export async function deleteConversation(req, res, next) {
+  const { id } = req.params;
+
+  if (!id) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Conversation ID is required" });
+  }
+
+  try {
+    const { error } = await supabase
+      .from("conversations")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      throw error;
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Conversation deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+}

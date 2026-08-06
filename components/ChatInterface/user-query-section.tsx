@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpIcon, LoaderIcon, Sparkles } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,10 @@ export default function UserQueryTextAreaAndOptions({
   className?: string;
   compact?: boolean;
 }) {
+  // accessing the search params from the url
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get("c");
+
   return (
     <div
       className={cn(

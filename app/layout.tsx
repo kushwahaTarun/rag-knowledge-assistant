@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Poppins, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -36,7 +37,10 @@ export default function RootLayout({
     >
       <body className="h-full overflow-hidden font-[family-name:var(--font-poppins)]">
         <SidebarProvider className="!h-full !min-h-0">
-          <AppSidebar />
+          {/* useSearchParams in AppSidebar needs a Suspense boundary */}
+          <Suspense fallback={null}>
+            <AppSidebar />
+          </Suspense>
           <SidebarInset className="mesh-bg min-h-0 min-w-0 overflow-hidden">
             <AppHeader />
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">

@@ -101,11 +101,9 @@ export async function createDocument(req, res, next) {
     } else if (fullText) {
       text = fullText;
     } else {
-      return res
-        .status(400)
-        .json({
-          error: "Please provide a .txt, .pdf, or .docx file, or paste text",
-        });
+      return res.status(400).json({
+        error: "Please provide a .txt, .pdf, or .docx file, or paste text",
+      });
     }
 
     if (!text.trim()) {
@@ -122,13 +120,13 @@ export async function createDocument(req, res, next) {
 // Controller function that is responsible for generating a response of the user asked question
 export async function askQuestion(req, res, next) {
   try {
-    const { question } = req.body;
+    const { question, conversationId } = req.body;
 
     // if question is missing, return a 400 error
     if (!question) {
       return res.status(400).json({ error: "Question is required" });
     }
-
+    
     const matched_chunks = await searchChunks(question);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
