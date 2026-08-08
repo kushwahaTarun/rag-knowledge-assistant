@@ -1,6 +1,9 @@
 "use server";
 
+import { redirect } from "next/navigation";
+
 import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server"
 
 type UploadState = {
   error: string;
@@ -168,3 +171,79 @@ export async function deleteDocuments(ids: string[]): Promise<{
     };
   }
 }
+
+type AuthFormState = {
+  error: string;
+  success: boolean;
+};
+
+export async function signUpUser(
+  _prevState: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!email || !password) {
+    return {
+      error: "Email and password are required for sign up",
+      success: false,
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (error) {
+    return {
+      error: error.message || "Error while signing up",
+      success: false,
+    };
+  }
+
+  // IMPORTANT: do not wrap redirect() in try/catch — it throws a special Next.js error
+  redirect("/");
+}
+
+export async function submitLogin(
+  _prevState: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!email || !password) {
+    return {
+      error: "Email and password are required for login",
+      success: false,
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    return {
+      error: error.message || "Failed to login",
+      success: false,
+    };
+  }
+
+  // IMPORTANT: do not wrap redirect() in try/catch — it throws a special Next.js error
+  redirect("/");
+}
+
+export async function signOutUser() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+
+  // IMPORTANT: do not wrap redirect() in try/catch — it throws a special Next.js error
+  redirect("/login");
+}
+

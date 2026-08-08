@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, MessageSquareText, User } from "lucide-react";
 
 import UserQueryTextAreaAndOptions from "@/components/ChatInterface/user-query-section";
 import { Message } from "@/interfaces/chat";
+import { useKeyboardBottomInset } from "@/hooks/use-visual-viewport";
 import { onNewChatRequest } from "@/lib/chat-session";
 import { createHandleSubmit } from "@/lib/stream-answer";
-import { cn } from "@/lib/utils";
+import { cn, displayConversationChats } from "@/lib/utils";
 
 export default function ChatPage() {
   // State lives HERE (in the component). Helpers only receive setters as args.
@@ -17,22 +19,50 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false);
 
   const chatListRef = useRef<HTMLUListElement>(null);
+  // Lift composer above the mobile keyboard when the visual viewport shrinks
+  const keyboardInset = useKeyboardBottomInset();
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get("c");
 
   // Pass state + setters into the lib helper so it can update UI
+  // conversationId must be in deps so continue-chat saves hit the right thread
   const handleSubmit = useMemo(
     () =>
       createHandleSubmit({
         isStreaming,
         setChats,
         setIsStreaming,
+        conversationId,
+        router,
       }),
-    [isStreaming],
+    [isStreaming, conversationId, router],
   );
 
+  // New chat: clear ?c= so we don't re-load the old conversation from the URL
   const handleNewChat = useCallback(() => {
     if (isStreaming) return;
     setChats([]);
-  }, [isStreaming]);
+    router.replace("/chat");
+  }, [isStreaming, router]);
+
+  const getConversationChats = useCallback(async () => {
+    if (!conversationId) {
+      setChats([]);
+      return;
+    }
+
+    const result = await displayConversationChats(conversationId);
+    if (result.success) {
+      setChats(result.conversation?.messages);
+    }
+  }, [conversationId]);
+
+  // useCallback only CREATES the function — you must call it in useEffect
+  useEffect(() => {
+    void getConversationChats();
+  }, [getConversationChats]);
 
   // Header "New chat" icon uses a window event so it can clear without lifting chat state
   useEffect(() => onNewChatRequest(handleNewChat), [handleNewChat]);
@@ -52,25 +82,28 @@ export default function ChatPage() {
   if (!chats.length) {
     return (
       <form
-        className="flex h-full min-h-0 w-full flex-1 items-center justify-center overflow-hidden px-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-4"
+        className="flex h-full min-h-0 w-full flex-1 items-center justify-center overflow-hidden px-3 sm:px-4"
+        style={{
+          paddingBottom: `max(1rem, calc(env(safe-area-inset-bottom) + ${keyboardInset}px))`,
+        }}
         onSubmit={handleSubmit}
       >
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="flex w-full max-w-2xl flex-col items-center gap-6 sm:gap-8"
+          className="flex w-full max-w-2xl flex-col items-center gap-5 sm:gap-8"
         >
           <div className="flex flex-col items-center px-1 text-center">
             <motion.span
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 240, damping: 18 }}
-              className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-800/30 to-sky-900/20 text-cyan-400/80 ring-1 ring-cyan-800/40 shadow-lg shadow-black/15 sm:mb-5 sm:size-16"
+              className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-800/30 to-sky-900/20 text-cyan-400/80 ring-1 ring-cyan-800/40 shadow-lg shadow-black/15 sm:mb-5 sm:size-16"
             >
-              <MessageSquareText className="size-6 sm:size-7" />
+              <MessageSquareText className="size-5 sm:size-7" />
             </motion.span>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-4xl">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-4xl">
               <span className="text-gradient">Chat with your knowledge</span>
             </h1>
             <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground sm:mt-3 sm:text-base">
@@ -95,7 +128,12 @@ export default function ChatPage() {
     !chats[chats.length - 1]?.content;
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+    <div
+      className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden"
+      style={{
+        paddingBottom: keyboardInset > 0 ? keyboardInset : undefined,
+      }}
+    >
       <div className="relative mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden px-3 sm:px-4">
         <ul
           ref={chatListRef}
@@ -119,7 +157,8 @@ export default function ChatPage() {
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   className={cn(
-                    "flex max-w-[min(92%,22rem)] gap-2 sm:max-w-[85%] sm:gap-2.5",
+                    // Wider bubbles on phones; keep comfortable caps on larger screens
+                    "flex max-w-[min(94%,22rem)] gap-2 sm:max-w-[min(85%,36rem)] sm:gap-2.5",
                     isUser ? "ml-auto flex-row-reverse" : "mr-auto",
                   )}
                 >
@@ -140,7 +179,7 @@ export default function ChatPage() {
 
                   <div
                     className={cn(
-                      "min-w-0 break-words rounded-2xl px-3 py-2.5 text-sm leading-6 shadow-sm sm:px-4 sm:py-3 sm:text-[15px] sm:leading-7",
+                      "min-w-0 overflow-hidden break-words [overflow-wrap:anywhere] rounded-2xl px-3 py-2.5 text-sm leading-6 shadow-sm sm:px-4 sm:py-3 sm:text-[15px] sm:leading-7",
                       isUser
                         ? "rounded-tr-md bg-gradient-to-br from-cyan-800 to-sky-900 text-white shadow-black/25"
                         : "rounded-tl-md border border-border/60 bg-card/70 text-foreground backdrop-blur-sm",

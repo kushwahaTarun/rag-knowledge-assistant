@@ -8,6 +8,8 @@ import {
 } from "react";
 
 import type { Message } from "@/interfaces/chat";
+import { notifyConversationCreated } from "@/lib/chat-session";
+import { saveConversationMessage } from "@/lib/utils";
 
 /**
  * Everything this helper needs from React — supplied by the component that owns the state.
@@ -17,11 +19,20 @@ export type StreamAnswerControls = {
   isStreaming: boolean;
   setChats: Dispatch<SetStateAction<Message[]>>;
   setIsStreaming: Dispatch<SetStateAction<boolean>>;
+  conversationId?: string | null;
+  /** Used to set ?c= after creating a new conversation */
+  router?: { replace: (href: string) => void };
 };
 
 export async function sendQuestion(
   question: string,
-  { isStreaming, setChats, setIsStreaming }: StreamAnswerControls,
+  {
+    isStreaming,
+    setChats,
+    setIsStreaming,
+    conversationId,
+    router,
+  }: StreamAnswerControls,
 ) {
   if (!question || isStreaming) return;
 
@@ -35,7 +46,60 @@ export async function sendQuestion(
     setIsStreaming(true);
   });
 
+  // Local id so we can reassign after create (URL param is not writable)
+  let activeConversationId = conversationId ?? null;
+  // True when this turn created a brand-new conversation (need URL update)
+  let createdNewConversation = false;
+
   try {
+    // Flow B: /chat with no ?c= → create a conversation first
+    if (!activeConversationId) {
+      const createRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/conversations`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // API returns { conversation: { id, title, ... } } — not conversationId
+          body: JSON.stringify({ title: question.slice(0, 80) }),
+        },
+      );
+
+      if (!createRes.ok) {
+        throw new Error("Failed to create conversation");
+      }
+
+      const createData = (await createRes.json()) as {
+        conversation?: {
+          id?: string;
+          title?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      const created = createData.conversation;
+      const newId = created?.id;
+
+      if (!newId) {
+        throw new Error(
+          "Create conversation response missing conversation.id",
+        );
+      }
+
+      activeConversationId = newId;
+      createdNewConversation = true;
+
+      // Sidebar holds its own list state and does not re-fetch on URL change.
+      // Broadcast so AppSidebar can prepend this conversation immediately.
+      notifyConversationCreated({
+        id: newId,
+        title: created?.title?.trim() || question.slice(0, 80),
+        created_at: created?.created_at,
+        updated_at: created?.updated_at,
+      });
+    }
+
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/ask`,
       {
@@ -43,7 +107,10 @@ export async function sendQuestion(
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({
+          question,
+          conversationId: activeConversationId,
+        }),
       },
     );
 
@@ -54,6 +121,7 @@ export async function sendQuestion(
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    let fullAssistant = "";
 
     while (true) {
       const { done, value } = await reader.read();
@@ -75,6 +143,8 @@ export async function sendQuestion(
         if (json.done) continue;
         if (!json.text) continue;
 
+        fullAssistant += json.text;
+
         setChats((prev) => {
           const next = [...prev];
           const last = next[next.length - 1];
@@ -87,6 +157,25 @@ export async function sendQuestion(
           return next;
         });
       }
+    }
+
+    // Persist turn under this conversation (existing or newly created)
+    if (activeConversationId && fullAssistant.trim()) {
+      try {
+        await saveConversationMessage(activeConversationId, "user", question);
+        await saveConversationMessage(
+          activeConversationId,
+          "assistant",
+          fullAssistant,
+        );
+      } catch (saveError) {
+        console.error("Failed to persist conversation messages:", saveError);
+      }
+    }
+
+    // Put ?c= in the URL so later messages continue the same thread
+    if (createdNewConversation && activeConversationId && router) {
+      router.replace(`/chat?c=${activeConversationId}`);
     }
   } catch {
     setChats((prev) => {

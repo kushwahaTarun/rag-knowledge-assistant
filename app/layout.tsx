@@ -1,11 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/sonner";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -18,6 +15,18 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "RAG Knowledge Assistant",
   description: "Upload documents and chat with your knowledge base.",
+};
+
+/** Explicit mobile viewport — pairs with safe-area + visualViewport chat handling */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0a1018" },
+    { media: "(prefers-color-scheme: light)", color: "#0a1018" },
+  ],
 };
 
 export default function RootLayout({
@@ -35,16 +44,7 @@ export default function RootLayout({
       )}
     >
       <body className="h-full overflow-hidden font-[family-name:var(--font-poppins)]">
-        <SidebarProvider className="!h-full !min-h-0">
-          <AppSidebar />
-          <SidebarInset className="mesh-bg min-h-0 min-w-0 overflow-hidden">
-            <AppHeader />
-            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-              {children}
-            </div>
-            <Toaster />
-          </SidebarInset>
-        </SidebarProvider>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
