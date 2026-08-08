@@ -17,7 +17,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import { SidebarUserMenu } from "@/components/sidebar-user-menu";
+import { onConversationCreated } from "@/lib/chat-session";
 import { cn, handleDeleteConversation } from "@/lib/utils";
 
 const navItems = [
@@ -60,10 +63,43 @@ export function AppSidebar() {
   const activeConversationId = searchParams.get("c");
   const isChatPage = pathname.startsWith("/chat");
   const router = useRouter();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Mobile sidebar is a Sheet — close it after any navigation so content is usable.
+  useEffect(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [pathname, activeConversationId, isMobile, setOpenMobile]);
+
+  // After a successful DELETE, update client list state (not Next revalidatePath).
+  // The list only loads when isChatPage becomes true — deleting does not re-run that effect.
+  async function onDeleteConversation(conversationId: string) {
+    if (!conversationId || deletingId) return;
+
+    setDeletingId(conversationId);
+    try {
+      const result = await handleDeleteConversation(conversationId);
+      if (!result.success) {
+        setHistoryError(result.error ?? "Failed to delete conversation");
+        return;
+      }
+
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+
+      // Only clear the open thread if we deleted the one currently in the URL
+      if (activeConversationId === conversationId) {
+        router.replace("/chat");
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   // Load conversation list only while on the chat page
   useEffect(() => {
@@ -128,6 +164,28 @@ export function AppSidebar() {
 
     return () => controller.abort();
   }, [isChatPage]);
+
+  // Flow B: first message on /chat (no ?c=) creates a conversation in stream-answer.
+  // That does not re-run the fetch above (isChatPage stays true), so we listen
+  // for a create event and prepend the new row into local state.
+  useEffect(() => {
+    return onConversationCreated((conversation) => {
+      setConversations((prev) => {
+        if (prev.some((item) => item.id === conversation.id)) {
+          return prev;
+        }
+        return [
+          {
+            id: conversation.id,
+            title: conversation.title || "Untitled chat",
+            created_at: conversation.created_at,
+            updated_at: conversation.updated_at,
+          },
+          ...prev,
+        ];
+      });
+    });
+  }, []);
 
   return (
     <Sidebar className="border-sidebar-border/80">
@@ -283,6 +341,7 @@ export function AppSidebar() {
 
                           <button
                             type="button"
+                            disabled={deletingId === conversation.id}
                             aria-label={`Delete ${conversation.title?.trim() || "conversation"}`}
                             className={cn(
                               "pointer-events-none absolute right-0 rounded-md px-1.5 py-1",
@@ -292,12 +351,18 @@ export function AppSidebar() {
                               "group-focus-within/history-row:pointer-events-auto group-focus-within/history-row:opacity-100",
                               "hover:bg-white/[0.04] hover:text-rose-300/90",
                               "focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-400/25",
+                              "disabled:pointer-events-none disabled:opacity-50",
                             )}
-                            onClick={() =>
-                              handleDeleteConversation(conversation.id, router)
-                            }
+                            onClick={(event) => {
+                              // Row is a link — stop navigation when deleting
+                              event.preventDefault();
+                              event.stopPropagation();
+                              void onDeleteConversation(conversation.id);
+                            }}
                           >
-                            Delete
+                            {deletingId === conversation.id
+                              ? "…"
+                              : "Delete"}
                           </button>
                         </div>
                       </SidebarMenuItem>
@@ -311,14 +376,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border/80 p-3">
-        <div className="glass-soft rounded-xl px-3 py-2.5">
-          <p className="text-[11px] font-medium text-foreground/90">
-            Powered by RAG
-          </p>
-          <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
-            Upload docs, retrieve context, get grounded answers.
-          </p>
-        </div>
+        <SidebarUserMenu />
       </SidebarFooter>
     </Sidebar>
   );

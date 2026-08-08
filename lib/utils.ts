@@ -63,22 +63,38 @@ export async function saveConversationMessage(
   return response.json();
 }
 
-// FUNCTION THAT WILL DELETE THE CONVERSATION
-export async function handleDeleteConversation(conversationId: string, router: { replace: (href: string) => void }) {
-  if (!conversationId) return;
+/**
+ * Deletes a conversation on the backend.
+ * Returns success so the caller can update React list state (this is not Next revalidate).
+ */
+export async function handleDeleteConversation(
+  conversationId: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!conversationId) {
+    return { success: false, error: "Conversation id is required" };
+  }
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/conversations/${conversationId}`, {
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+    if (!baseUrl) {
+      return { success: false, error: "NEXT_PUBLIC_BACKEND_BASE_URL is not set" };
+    }
+
+    const response = await fetch(`${baseUrl}/api/conversations/${conversationId}`, {
       method: "DELETE",
     });
 
     if (!response.ok) {
-      throw new Error("Failed to delete conversation");
+      return { success: false, error: "Failed to delete conversation" };
     }
 
-    router.replace("/chat");
-    return response.json();
+    return { success: true };
   } catch (error) {
     console.error("An error occurred while deleting the conversation:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to delete conversation",
+    };
   }
 }
