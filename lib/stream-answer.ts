@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import type { Message } from "@/interfaces/chat";
+import { notifyConversationCreated } from "@/lib/chat-session";
 import { saveConversationMessage } from "@/lib/utils";
 
 /**
@@ -70,9 +71,15 @@ export async function sendQuestion(
       }
 
       const createData = (await createRes.json()) as {
-        conversation?: { id?: string };
+        conversation?: {
+          id?: string;
+          title?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
       };
-      const newId = createData.conversation?.id;
+      const created = createData.conversation;
+      const newId = created?.id;
 
       if (!newId) {
         throw new Error(
@@ -82,6 +89,15 @@ export async function sendQuestion(
 
       activeConversationId = newId;
       createdNewConversation = true;
+
+      // Sidebar holds its own list state and does not re-fetch on URL change.
+      // Broadcast so AppSidebar can prepend this conversation immediately.
+      notifyConversationCreated({
+        id: newId,
+        title: created?.title?.trim() || question.slice(0, 80),
+        created_at: created?.created_at,
+        updated_at: created?.updated_at,
+      });
     }
 
     const res = await fetch(
